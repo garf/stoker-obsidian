@@ -2,6 +2,8 @@
 
 Track any inventory in your Obsidian vault. Monitor stock levels, set minimum thresholds, get warnings when running low, and generate shopping lists.
 
+![Stoker Screenshot](screenshot.png)
+
 ## Features
 
 - **Track anything**: Products, supplies, tools, collectibles - whatever you need to keep stock of
@@ -82,10 +84,12 @@ lastUpdated: 2025-01-29
 
 ## Category Name
 
-- [ ] Item Name | 5 pcs | min: 2
-- [!] Low Stock Item | 1 pcs | min: 3
-- [-] Out of Stock | 0 pcs
-- [x] Boolean Item | in stock
+- Item Name | 5 pcs | min: 2
+- Low Stock Item | 1 pcs | min: 3
+- Out of Stock | 0 pcs
+- Boolean Item | in stock
+- Another Item | out of stock
+- Planned Restock | 2 pcs | restock
 ```
 
 ## Support

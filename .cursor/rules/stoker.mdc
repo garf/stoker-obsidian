@@ -13,11 +13,20 @@ Stoker is a **product-agnostic inventory tracking plugin** for Obsidian. Users c
 
 ### Main Types (`src/types.ts`)
 
-- **`InventoryItem`**: Represents a single item with name, category, amount, unit, minimum threshold, and restock flag
+- **`InventoryItem`**: Represents a single item with name, category, amount, unit, minimum threshold (0 = no threshold), and restock flag
 - **`InventoryList`**: Represents an inventory list (id, name, filePath)
 - **`StokerSettings`**: Plugin settings including list references and UI preferences
 - **`UnitType`**: `'count' | 'portion' | 'weight' | 'volume' | 'boolean'`
 - **`StockStatus`**: `'normal' | 'warning' | 'out' | 'in-stock'`
+
+### Stock Status Logic
+
+- **Normal**: Numeric item with amount above minimum threshold (or no threshold set)
+- **Warning**: Numeric item at or below minimum threshold but > 0
+- **Out**: Numeric item at 0, or boolean item set to "out of stock"
+- **In-stock**: Boolean item set to "in stock"
+
+All item types use the same `package` icon - color changes based on status (green/yellow/red/purple for restock).
 
 ### UI Layer (`src/ui/`) - React-based
 
@@ -62,7 +71,7 @@ All user-facing commands are registered here. Command IDs are stable and should 
 
 ## Data Storage Format
 
-Inventory files use markdown with YAML frontmatter:
+Inventory files use markdown with YAML frontmatter. Items use simple bullet points (not checkboxes) to avoid rendering conflicts:
 
 ```markdown
 ---
@@ -73,14 +82,20 @@ lastUpdated: 2025-01-29
 
 ## Category Name
 
-- [ ] Normal Item | 5 pcs | min: 2
-- [!] Warning Item | 1 pcs | min: 3
-- [-] Out of Stock | 0 pcs
-- [x] Boolean In Stock | in stock
-- [-] Boolean Out | out of stock
+- Normal Item | 5 pcs | min: 2
+- Warning Item | 1 pcs | min: 3
+- Out of Stock | 0 pcs
+- Boolean In Stock | in stock
+- Boolean Out | out of stock
+- Restock Item | 2 pcs | restock
 ```
 
-Status characters: `[ ]` = normal, `[!]` = warning, `[-]` = out, `[x]` = in-stock (boolean)
+Status is determined by content:
+- **Boolean items**: `in stock` or `out of stock` text
+- **Numeric items**: Amount compared to `min: X` threshold (0 means no threshold)
+- **Restock flag**: `| restock` suffix marks item for shopping list
+
+Legacy checkbox format (`- [x]`, `- [ ]`, etc.) is still parsed for backwards compatibility but converted to bullet points on save.
 
 ## Development Notes
 
@@ -105,8 +120,8 @@ Status characters: `[ ]` = normal, `[!]` = warning, `[-]` = out, `[x]` = in-stoc
 
 The codebase follows Obsidian's plugin review guidelines:
 
-- **Sentence case**: UI text uses sentence case. Use `eslint-disable` with reason comments for product names ("Stoker", "Obsidian Sync") and unit abbreviations ("pcs", "kg", "L")
+- **Sentence case**: UI text uses sentence case. DO NOT use `eslint-disable` for `obsidianmd/ui/sentence-case` or `@typescript-eslint/no-deprecated` - these are not allowed. Instead, rephrase text to be compliant (e.g., "Open stoker" instead of "Open Stoker", use "Unit" placeholder instead of "pcs")
 - **No leaf.detach()**: Use `workspace.detachLeavesOfType()` instead of directly detaching leaves
-- **Async methods**: View shell `onOpen`/`onClose` must be async (required by `ItemView` interface) even without await
+- **Async methods**: View shell `onOpen`/`onClose` must return `Promise<void>` (required by `ItemView` interface). If no await needed, use non-async function that returns `Promise.resolve()` to satisfy both TypeScript and eslint's "async method must use await" rule
 - **Promise handling**: All promises are properly handled with `await`, `.catch()`, `.then()`, or `void` operator
-- **CSS styling**: Avoid inline `style.display`; use CSS classes and custom properties for theming compatibility
+- **CSS styling**: Avoid inline `style.display`; use CSS classes (e.g., `.stoker-hidden { display: none !important; }`) and custom properties for theming compatibility
