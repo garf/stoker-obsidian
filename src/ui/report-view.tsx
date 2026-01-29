@@ -37,7 +37,7 @@ export class ReportView extends ItemView {
         return 'file-text';
     }
 
-    async onOpen(): Promise<void> {
+    onOpen(): Promise<void> {
         const container = this.containerEl.children[1] as HTMLElement;
         container.empty();
         container.addClass('stoker-report-view');
@@ -61,9 +61,10 @@ export class ReportView extends ItemView {
             }
         };
         this.plugin.listManager.onListChange(this.listChangeHandler);
+        return Promise.resolve();
     }
 
-    async onClose(): Promise<void> {
+    onClose(): Promise<void> {
         // Unsubscribe from list changes
         if (this.listChangeHandler) {
             this.plugin.listManager.offListChange(this.listChangeHandler);
@@ -72,5 +73,6 @@ export class ReportView extends ItemView {
 
         this.root?.unmount();
         this.root = null;
+        return Promise.resolve();
     }
 }

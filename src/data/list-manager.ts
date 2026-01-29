@@ -224,7 +224,7 @@ export class ListManager {
     /**
      * Get the active store (most common operation)
      */
-    async getActiveStore(): Promise<InventoryStore | null> {
+    getActiveStore(): InventoryStore | null {
         if (!this.settings.activeListId) return null;
         return this.getStore(this.settings.activeListId);
     }
@@ -377,7 +377,7 @@ export class ListManager {
      * Reload the active store from file
      */
     async reloadActiveStore(): Promise<void> {
-        const store = await this.getActiveStore();
+        const store = this.getActiveStore();
         if (store) {
             await store.load();
         }

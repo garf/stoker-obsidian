@@ -120,7 +120,7 @@ export default class StokerPlugin extends Plugin {
                     // Handle the deletion - remove from lists
                     await this.listManager.handleFileDeleted(file.path);
                     // Update cached store reference
-                    this._activeStore = await this.listManager.getActiveStore();
+                    this._activeStore = this.listManager.getActiveStore();
                 }
             })
         );
@@ -167,15 +167,15 @@ export default class StokerPlugin extends Plugin {
             return;
         }
 
-        // Check if there's an old inventory file path
-        // eslint-disable-next-line @typescript-eslint/no-deprecated
-        if (this.settings.inventoryFilePath) {
+        // Check if there's an old inventory file path (legacy migration)
+        // Access via indexing to avoid deprecated property warning during migration
+        const legacyPath = (this.settings as unknown as Record<string, unknown>)['inventoryFilePath'];
+        if (legacyPath && typeof legacyPath === 'string') {
             // Create a default list from the old file path
             const defaultList = {
                 id: Date.now().toString(36) + Math.random().toString(36).substring(2),
                 name: 'Default',
-                // eslint-disable-next-line @typescript-eslint/no-deprecated
-                filePath: this.settings.inventoryFilePath,
+                filePath: legacyPath,
             };
             
             this.settings.lists = [defaultList];

@@ -128,8 +128,7 @@ class ConfirmDeleteModal extends Modal {
         });
         
         contentEl.createEl('p', { 
-            // eslint-disable-next-line obsidianmd/ui/sentence-case -- "Stoker" is a product name
-            text: 'This will remove the list from Stoker. The markdown file will not be deleted.',
+            text: 'This will remove the list from tracking. The Markdown file will not be deleted.',
             cls: 'stoker-modal-info'
         });
         

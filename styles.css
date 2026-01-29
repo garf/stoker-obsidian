@@ -1,5 +1,10 @@
 /* Stoker - Inventory Plugin Styles */
 
+/* ===== Utility Classes ===== */
+.stoker-hidden {
+    display: none !important;
+}
+
 /* ===== Base Variables ===== */
 .stoker-sidebar,
 .stoker-inventory-view,

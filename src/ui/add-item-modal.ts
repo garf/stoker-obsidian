@@ -103,8 +103,7 @@ export class AddItemModal extends Modal {
             })
             .addText(text => {
                 this.unitInput = text;
-                // eslint-disable-next-line obsidianmd/ui/sentence-case -- unit abbreviation
-                text.setPlaceholder('pcs');
+                text.setPlaceholder('Unit');
                 text.setValue(this.unit);
                 text.onChange(value => {
                     this.unit = value || 'pcs';
@@ -160,17 +159,15 @@ export class AddItemModal extends Modal {
                     this.unit = '';
                     break;
                 case 'weight':
-                    // eslint-disable-next-line obsidianmd/ui/sentence-case -- unit abbreviation
-                    this.unitInput.setPlaceholder('kg');
+                    this.unitInput.setPlaceholder('Weight unit');
                     this.unit = 'kg';
                     break;
                 case 'volume':
-                    this.unitInput.setPlaceholder('L');
+                    this.unitInput.setPlaceholder('Volume unit');
                     this.unit = 'L';
                     break;
                 default:
-                    // eslint-disable-next-line obsidianmd/ui/sentence-case -- unit abbreviation
-                    this.unitInput.setPlaceholder('pcs');
+                    this.unitInput.setPlaceholder('Unit');
                     this.unit = 'pcs';
             }
             this.unitInput.setValue(this.unit);

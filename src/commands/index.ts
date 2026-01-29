@@ -208,8 +208,7 @@ export function registerCommands(plugin: StokerPlugin): void {
  * Register the ribbon icon
  */
 export function registerRibbonIcon(plugin: StokerPlugin): void {
-    // eslint-disable-next-line obsidianmd/ui/sentence-case -- "Stoker" is a product name
-    plugin.addRibbonIcon('package', 'Open Stoker', async () => {
+    plugin.addRibbonIcon('package', 'Open stoker', async () => {
         const { workspace } = plugin.app;
         
         // Check if view already exists
