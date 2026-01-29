@@ -98,3 +98,80 @@ export function validateUnit(value: string, required = true): string | null {
     return null;
 }
 
+/**
+ * Validate minimum threshold
+ * @param value The minimum threshold value
+ * @param currentAmount The current amount (optional, for comparison)
+ */
+export function validateMinimum(value: number | undefined): string | null {
+    if (value === undefined) {
+        return null; // Optional field
+    }
+    if (value < 0) {
+        return 'Minimum threshold cannot be negative';
+    }
+    if (!Number.isFinite(value)) {
+        return 'Invalid minimum threshold value';
+    }
+    return null;
+}
+
+/**
+ * Validate amount
+ * @param value The amount value
+ * @param unitType The unit type (boolean doesn't need numeric validation)
+ */
+export function validateAmount(value: number | boolean, unitType: string): string | null {
+    if (unitType === 'boolean') {
+        return null; // Boolean values are always valid
+    }
+    
+    if (typeof value !== 'number') {
+        return 'Amount must be a number';
+    }
+    
+    if (value < 0) {
+        return 'Amount cannot be negative';
+    }
+    
+    if (!Number.isFinite(value)) {
+        return 'Invalid amount value';
+    }
+    
+    // Reasonable upper limit to prevent accidental huge values
+    if (value > 999999999) {
+        return 'Amount is too large';
+    }
+    
+    return null;
+}
+
+/**
+ * Check if an item name already exists in a category
+ * @param name The item name to check
+ * @param category The category to check in
+ * @param existingItems Array of existing items
+ * @param excludeId Optional ID to exclude (for editing existing items)
+ */
+export function checkDuplicateName(
+    name: string, 
+    category: string, 
+    existingItems: Array<{ id: string; name: string; category: string }>,
+    excludeId?: string
+): string | null {
+    const normalizedName = name.trim().toLowerCase();
+    const normalizedCategory = category.trim().toLowerCase();
+    
+    const duplicate = existingItems.find(item => 
+        item.name.trim().toLowerCase() === normalizedName &&
+        item.category.trim().toLowerCase() === normalizedCategory &&
+        item.id !== excludeId
+    );
+    
+    if (duplicate) {
+        return `An item named "${name}" already exists in this category`;
+    }
+    
+    return null;
+}
+

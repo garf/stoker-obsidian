@@ -16,19 +16,22 @@ export default class StokerPlugin extends Plugin {
     private _activeStore: InventoryStore | null = null;
 
     /**
-     * Get the active inventory store (for backward compatibility)
-     * Note: This may return null if no list is active
+     * Get the active inventory store
+     * Returns null if no list is active - callers should check before using
      */
-    get store(): InventoryStore {
+    get store(): InventoryStore | null {
         if (!this._activeStore) {
             // Try to get from list manager synchronously
             this._activeStore = this.listManager?.getActiveStoreSync() ?? null;
         }
-        // Return a dummy store if none available to prevent null errors
-        if (!this._activeStore) {
-            this._activeStore = new InventoryStore(this.app.vault, '');
-        }
         return this._activeStore;
+    }
+    
+    /**
+     * Check if there's an active store available
+     */
+    hasActiveStore(): boolean {
+        return this.store !== null;
     }
 
     async onload(): Promise<void> {

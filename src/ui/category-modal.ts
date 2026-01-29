@@ -1,4 +1,4 @@
-import { App, Modal, Setting, setIcon } from 'obsidian';
+import { App, Modal, Setting, setIcon, Notice } from 'obsidian';
 import type StokerPlugin from '../main';
 import { validateCategoryName, sanitizeInput, showInputError, clearInputError } from '../utils/validation';
 
@@ -21,8 +21,14 @@ export class CategoryManageModal extends Modal {
         
         contentEl.createEl('h2', { text: 'Manage categories' });
         
-        const categories = this.plugin.store.getCategories();
-        const itemsByCategory = this.plugin.store.getItemsByCategory();
+        const store = this.plugin.store;
+        if (!store) {
+            contentEl.createEl('p', { text: 'No active inventory list.', cls: 'stoker-muted' });
+            return;
+        }
+        
+        const categories = store.getCategories();
+        const itemsByCategory = store.getItemsByCategory();
         
         if (categories.length === 0) {
             contentEl.createEl('p', { 
@@ -168,21 +174,49 @@ export class CategoryManageModal extends Modal {
     }
 
     private async renameCategory(oldName: string, newName: string): Promise<void> {
-        const items = this.plugin.store.getItems();
+        const store = this.plugin.store;
+        if (!store) return;
         
-        for (const item of items) {
-            if (item.category === oldName) {
-                await this.plugin.store.updateItem(item.id, { category: newName });
+        const items = store.getItems();
+        
+        // Collect all items to update
+        const updates = items
+            .filter(item => item.category === oldName)
+            .map(item => ({ id: item.id, updates: { category: newName } }));
+        
+        // Batch update - saves only once
+        if (updates.length > 0) {
+            try {
+                await store.updateItemsBatch(updates);
+                new Notice(`Renamed category to "${newName}"`);
+            } catch (error) {
+                const message = error instanceof Error ? error.message : 'Failed to rename category';
+                new Notice(`Error: ${message}`);
+                console.error('Stoker: Failed to rename category:', error);
             }
         }
     }
 
     private async deleteCategory(category: string): Promise<void> {
-        const items = this.plugin.store.getItems();
+        const store = this.plugin.store;
+        if (!store) return;
         
-        for (const item of items) {
-            if (item.category === category) {
-                await this.plugin.store.updateItem(item.id, { category: '' });
+        const items = store.getItems();
+        
+        // Collect all items to update
+        const updates = items
+            .filter(item => item.category === category)
+            .map(item => ({ id: item.id, updates: { category: '' } }));
+        
+        // Batch update - saves only once
+        if (updates.length > 0) {
+            try {
+                await store.updateItemsBatch(updates);
+                new Notice(`Deleted category "${category}"`);
+            } catch (error) {
+                const message = error instanceof Error ? error.message : 'Failed to delete category';
+                new Notice(`Error: ${message}`);
+                console.error('Stoker: Failed to delete category:', error);
             }
         }
     }

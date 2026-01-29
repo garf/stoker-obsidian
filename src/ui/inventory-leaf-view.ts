@@ -31,6 +31,10 @@ export class InventoryLeafView extends ItemView {
     private shoppingBtn: HTMLButtonElement;
     private categoryBtnLabel: HTMLSpanElement;
     private searchInput: HTMLInputElement;
+    
+    // Listener cleanup tracking
+    private storeCallback: (() => void) | null = null;
+    private listChangeCallback: ((type: any) => void) | null = null;
 
     constructor(leaf: WorkspaceLeaf, plugin: StokerPlugin) {
         super(leaf);
@@ -42,6 +46,10 @@ export class InventoryLeafView extends ItemView {
     }
 
     getDisplayText(): string {
+        const activeList = this.plugin.listManager.getActiveList();
+        if (activeList) {
+            return `Inventory: ${activeList.name}`;
+        }
         return 'Inventory';
     }
 
@@ -148,17 +156,43 @@ export class InventoryLeafView extends ItemView {
         // Load collapsed state
         this.collapsedCategories = new Set(this.plugin.settings.collapsedCategories);
         
-        // Register for inventory changes
-        this.plugin.store.onInventoryChange(() => this.refresh());
+        // Register for inventory changes (if there's an active store)
+        this.storeCallback = () => this.refresh();
+        const store = this.plugin.store;
+        if (store) {
+            store.onInventoryChange(this.storeCallback);
+        }
         
         // Register for list changes (when switching lists)
-        this.plugin.listManager.onListChange(() => this.refresh());
+        this.listChangeCallback = (type: any) => {
+            // Reset filters when switching lists to avoid confusion
+            if (type === 'list-switched') {
+                this.resetViewState();
+            }
+            this.refresh();
+        };
+        this.plugin.listManager.onListChange(this.listChangeCallback);
         
         // Initial render
         await this.refresh();
     }
 
     async onClose(): Promise<void> {
+        // Remove store listener
+        if (this.storeCallback) {
+            const store = this.plugin.store;
+            if (store) {
+                store.offInventoryChange(this.storeCallback);
+            }
+            this.storeCallback = null;
+        }
+        
+        // Remove list change listener
+        if (this.listChangeCallback) {
+            this.plugin.listManager.offListChange(this.listChangeCallback);
+            this.listChangeCallback = null;
+        }
+        
         // Save collapsed state
         this.plugin.settings.collapsedCategories = Array.from(this.collapsedCategories);
         await this.plugin.saveSettings();
@@ -249,7 +283,8 @@ export class InventoryLeafView extends ItemView {
         const menu = new Menu();
         
         // Get all categories from the store
-        const categories = this.plugin.store.getCategories();
+        const store = this.plugin.store;
+        const categories = store ? store.getCategories() : [];
         
         // Add "All categories" option
         menu.addItem((item) => {
@@ -313,22 +348,37 @@ export class InventoryLeafView extends ItemView {
      * Reset all filters to their default state
      */
     private resetAllFilters(): void {
+        this.resetViewState();
+        this.refresh();
+    }
+    
+    /**
+     * Reset view state (filters, search, etc.) without refreshing
+     * Used when switching lists to avoid confusion
+     */
+    private resetViewState(): void {
         // Clear search
         this.searchQuery = '';
-        this.searchInput.value = '';
+        if (this.searchInput) {
+            this.searchInput.value = '';
+        }
         
         // Reset status filter
         this.filterBy = 'all';
-        this.filterBtnLabel.textContent = 'All items';
+        if (this.filterBtnLabel) {
+            this.filterBtnLabel.textContent = 'All items';
+        }
         
         // Reset category filter
         this.filterByCategory = '__all__';
-        this.categoryBtnLabel.textContent = 'All categories';
+        if (this.categoryBtnLabel) {
+            this.categoryBtnLabel.textContent = 'All categories';
+        }
         
         // Reset shopping button
-        this.shoppingBtn.removeClass('stoker-shopping-btn--active');
-        
-        this.refresh();
+        if (this.shoppingBtn) {
+            this.shoppingBtn.removeClass('stoker-shopping-btn--active');
+        }
     }
 
     async refresh(): Promise<void> {
@@ -342,7 +392,14 @@ export class InventoryLeafView extends ItemView {
             return;
         }
         
-        let items = this.plugin.store.getItems();
+        const store = this.plugin.store;
+        if (!store) {
+            const emptyState = this.createNoListState();
+            this.inventoryContentEl.appendChild(emptyState);
+            return;
+        }
+        
+        let items = store.getItems();
         
         // Apply search filter (search by name only)
         if (this.searchQuery) {
@@ -381,12 +438,12 @@ export class InventoryLeafView extends ItemView {
         // Warning banners (only when showing all)
         if (this.filterBy === 'all' && !this.searchQuery) {
             // Count items by status
-            const allItems = this.plugin.store.getItems();
+            const allItems = store.getItems();
             const warningCount = allItems.filter(item => 
-                this.plugin.store.getStockStatus(item) === 'warning'
+                store.getStockStatus(item) === 'warning'
             ).length;
             const outOfStockCount = allItems.filter(item => 
-                this.plugin.store.getStockStatus(item) === 'out'
+                store.getStockStatus(item) === 'out'
             ).length;
             
             // Warning banner (almost running out - yellow)
@@ -418,29 +475,32 @@ export class InventoryLeafView extends ItemView {
     }
 
     private applyFilter(items: InventoryItem[]): InventoryItem[] {
+        const store = this.plugin.store;
+        if (!store) return items;
+        
         switch (this.filterBy) {
             case 'in-stock-enough':
                 // Items with normal stock levels (above minimum or no minimum set)
                 return items.filter(item => {
-                    const status = this.plugin.store.getStockStatus(item);
+                    const status = store.getStockStatus(item);
                     return status === 'normal' || status === 'in-stock';
                 });
             case 'almost-running-out':
                 // Items below minimum threshold but not yet out
                 return items.filter(item => {
-                    const status = this.plugin.store.getStockStatus(item);
+                    const status = store.getStockStatus(item);
                     return status === 'warning';
                 });
             case 'not-in-stock':
                 // Items completely out of stock
                 return items.filter(item => {
-                    const status = this.plugin.store.getStockStatus(item);
+                    const status = store.getStockStatus(item);
                     return status === 'out';
                 });
             case 'any-in-stock':
                 // Any item that has some stock (normal, in-stock, or warning)
                 return items.filter(item => {
-                    const status = this.plugin.store.getStockStatus(item);
+                    const status = store.getStockStatus(item);
                     return status !== 'out';
                 });
             case 'planned-restock':
@@ -452,15 +512,18 @@ export class InventoryLeafView extends ItemView {
     }
 
     private renderStats(items: InventoryItem[]): void {
+        const store = this.plugin.store;
+        if (!store) return;
+        
         const stats = this.inventoryContentEl.createDiv({ cls: 'stoker-stats' });
         
         const total = items.length;
         const lowStock = items.filter(i => {
-            const s = this.plugin.store.getStockStatus(i);
+            const s = store.getStockStatus(i);
             return s === 'warning';
         }).length;
         const outOfStock = items.filter(i => {
-            const s = this.plugin.store.getStockStatus(i);
+            const s = store.getStockStatus(i);
             return s === 'out';
         }).length;
         
@@ -474,6 +537,9 @@ export class InventoryLeafView extends ItemView {
     }
 
     private renderByCategory(items: InventoryItem[]): void {
+        const store = this.plugin.store;
+        if (!store) return;
+        
         // Group items by category
         const grouped = new Map<string, InventoryItem[]>();
         
@@ -523,7 +589,7 @@ export class InventoryLeafView extends ItemView {
                 for (const item of categoryItems) {
                     const row = createItemRow(
                         item,
-                        this.plugin.store,
+                        store,
                         (item) => this.openEditModal(item),
                         () => this.refresh()
                     );
@@ -534,6 +600,9 @@ export class InventoryLeafView extends ItemView {
     }
 
     private renderFlat(items: InventoryItem[]): void {
+        const store = this.plugin.store;
+        if (!store) return;
+        
         // Sort items based on sort option
         const sorted = [...items].sort((a, b) => {
             switch (this.sortBy) {
@@ -546,8 +615,8 @@ export class InventoryLeafView extends ItemView {
                 }
                 case 'status': {
                     const statusOrder = { 'out': 0, 'warning': 1, 'normal': 2, 'in-stock': 3 };
-                    const aStatus = this.plugin.store.getStockStatus(a);
-                    const bStatus = this.plugin.store.getStockStatus(b);
+                    const aStatus = store.getStockStatus(a);
+                    const bStatus = store.getStockStatus(b);
                     return statusOrder[aStatus] - statusOrder[bStatus];
                 }
                 default:
@@ -560,7 +629,7 @@ export class InventoryLeafView extends ItemView {
         for (const item of sorted) {
             const row = createItemRow(
                 item,
-                this.plugin.store,
+                store,
                 (item) => this.openEditModal(item),
                 () => this.refresh()
             );

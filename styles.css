@@ -365,6 +365,8 @@
 
 .stoker-item--out .stoker-item-name {
     opacity: 0.7;
+    text-decoration: line-through;
+    text-decoration-color: var(--color-red);
 }
 
 /* Shopping list / planned restock - purple accent with visible background */

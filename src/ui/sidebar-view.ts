@@ -19,6 +19,8 @@ export class StokerSidebarView extends ItemView {
     private listNameEl: HTMLElement;
     private collapsedCategories: Set<string> = new Set();
     private currentStoreCallback: (() => void) | null = null;
+    private listChangeCallback: ((type: any) => void) | null = null;
+    private currentStore: import('../data/inventory-store').InventoryStore | null = null;
 
     constructor(leaf: WorkspaceLeaf, plugin: StokerPlugin) {
         super(leaf);
@@ -30,6 +32,10 @@ export class StokerSidebarView extends ItemView {
     }
 
     getDisplayText(): string {
+        const activeList = this.plugin.listManager.getActiveList();
+        if (activeList) {
+            return `Stoker: ${activeList.name}`;
+        }
         return 'Stoker Inventory';
     }
 
@@ -86,7 +92,7 @@ export class StokerSidebarView extends ItemView {
         this.registerStoreListener();
         
         // Register for list changes - re-register store listener when list switches
-        this.plugin.listManager.onListChange(async (type) => {
+        this.listChangeCallback = async (type) => {
             this.updateListName();
             
             // When list switches, we need to listen to the new store
@@ -95,7 +101,8 @@ export class StokerSidebarView extends ItemView {
             }
             
             await this.refresh();
-        });
+        };
+        this.plugin.listManager.onListChange(this.listChangeCallback);
         
         // Initial render
         await this.refresh();
@@ -106,21 +113,35 @@ export class StokerSidebarView extends ItemView {
      * Removes old listener if any
      */
     private registerStoreListener(): void {
-        // Remove old listener if exists
-        if (this.currentStoreCallback) {
-            this.plugin.store.offInventoryChange(this.currentStoreCallback);
+        // Remove old listener from the OLD store if exists
+        if (this.currentStoreCallback && this.currentStore) {
+            this.currentStore.offInventoryChange(this.currentStoreCallback);
         }
         
-        // Create new listener
-        this.currentStoreCallback = () => this.refresh();
-        this.plugin.store.onInventoryChange(this.currentStoreCallback);
+        // Track the new store instance
+        this.currentStore = this.plugin.store;
+        
+        // Only register if there's an active store
+        if (this.currentStore) {
+            // Create new listener
+            this.currentStoreCallback = () => this.refresh();
+            this.currentStore.onInventoryChange(this.currentStoreCallback);
+        } else {
+            this.currentStoreCallback = null;
+        }
     }
 
     async onClose(): Promise<void> {
         // Remove store listener
-        if (this.currentStoreCallback) {
-            this.plugin.store.offInventoryChange(this.currentStoreCallback);
+        if (this.currentStoreCallback && this.currentStore) {
+            this.currentStore.offInventoryChange(this.currentStoreCallback);
             this.currentStoreCallback = null;
+        }
+        
+        // Remove list change listener
+        if (this.listChangeCallback) {
+            this.plugin.listManager.offListChange(this.listChangeCallback);
+            this.listChangeCallback = null;
         }
         
         // Save collapsed state
@@ -276,7 +297,14 @@ export class StokerSidebarView extends ItemView {
             return;
         }
         
-        const items = this.plugin.store.getItems();
+        const store = this.plugin.store;
+        if (!store) {
+            const emptyState = this.createNoListState();
+            this.inventoryContentEl.appendChild(emptyState);
+            return;
+        }
+        
+        const items = store.getItems();
         
         if (items.length === 0) {
             const emptyState = createEmptyState(
@@ -288,12 +316,12 @@ export class StokerSidebarView extends ItemView {
         }
         
         // Warning banners
-        const allItems = this.plugin.store.getItems();
+        const allItems = store.getItems();
         const warningCount = allItems.filter(item => 
-            this.plugin.store.getStockStatus(item) === 'warning'
+            store.getStockStatus(item) === 'warning'
         ).length;
         const outOfStockCount = allItems.filter(item => 
-            this.plugin.store.getStockStatus(item) === 'out'
+            store.getStockStatus(item) === 'out'
         ).length;
         
         if (warningCount > 0) {
@@ -321,7 +349,7 @@ export class StokerSidebarView extends ItemView {
         }
         
         // Group items by category
-        const grouped = this.plugin.store.getItemsByCategory();
+        const grouped = store.getItemsByCategory();
         
         // Sort categories (empty/uncategorized last)
         const sortedCategories = Array.from(grouped.keys()).sort((a, b) => {
@@ -356,7 +384,7 @@ export class StokerSidebarView extends ItemView {
                 for (const item of categoryItems) {
                     const row = createItemRow(
                         item,
-                        this.plugin.store,
+                        store,
                         (item) => this.openEditModal(item),
                         () => this.refresh()
                     );

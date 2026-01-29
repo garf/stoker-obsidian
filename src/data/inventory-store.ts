@@ -446,6 +446,47 @@ export class InventoryStore extends Events {
     }
 
     /**
+     * Update multiple items at once (batch operation)
+     * This saves only once at the end, improving performance for bulk operations
+     */
+    async updateItemsBatch(updates: Array<{ id: string; updates: Partial<Omit<InventoryItem, 'id'>> }>): Promise<InventoryItem[]> {
+        const updatedItems: InventoryItem[] = [];
+        
+        for (const { id, updates: itemUpdates } of updates) {
+            const index = this.items.findIndex(item => item.id === id);
+            if (index === -1) continue;
+            
+            const currentItem = this.items[index];
+            if (!currentItem) continue;
+            
+            const updatedItem: InventoryItem = {
+                id: currentItem.id,
+                name: itemUpdates.name ?? currentItem.name,
+                category: itemUpdates.category ?? currentItem.category,
+                unitType: itemUpdates.unitType ?? currentItem.unitType,
+                amount: itemUpdates.amount ?? currentItem.amount,
+                unit: itemUpdates.unit ?? currentItem.unit,
+                minimum: itemUpdates.minimum !== undefined ? itemUpdates.minimum : currentItem.minimum,
+                plannedRestock: itemUpdates.plannedRestock !== undefined ? itemUpdates.plannedRestock : currentItem.plannedRestock,
+            };
+            
+            this.items[index] = updatedItem;
+            updatedItems.push(updatedItem);
+        }
+        
+        // Save once at the end
+        if (updatedItems.length > 0) {
+            await this.save();
+            // Notify listeners about the batch update
+            for (const item of updatedItems) {
+                this.notifyListeners('item-updated', item);
+            }
+        }
+        
+        return updatedItems;
+    }
+
+    /**
      * Increase item amount
      */
     async increaseAmount(id: string, by = 1): Promise<InventoryItem | null> {

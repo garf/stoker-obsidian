@@ -258,9 +258,9 @@ export function createCategoryHeader(
     const name = header.createDiv({ cls: 'stoker-category-name' });
     name.textContent = categoryName || 'Uncategorized';
     
+    // Just call onToggle - the parent will re-render with the correct icon state
     header.addEventListener('click', () => {
         onToggle();
-        setIcon(toggle, isCollapsed ? 'chevron-down' : 'chevron-right');
     });
     
     return header;
@@ -316,9 +316,29 @@ export interface SearchInputResult {
 }
 
 /**
- * Create a filter/search input
+ * Create a debounced function that delays invoking the callback
  */
-export function createSearchInput(onSearch: (query: string) => void): SearchInputResult {
+function debounce<T extends (...args: any[]) => void>(
+    fn: T, 
+    delay: number
+): (...args: Parameters<T>) => void {
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    
+    return (...args: Parameters<T>) => {
+        if (timeoutId) {
+            clearTimeout(timeoutId);
+        }
+        timeoutId = setTimeout(() => {
+            fn(...args);
+            timeoutId = null;
+        }, delay);
+    };
+}
+
+/**
+ * Create a filter/search input with debounced callback
+ */
+export function createSearchInput(onSearch: (query: string) => void, debounceMs = 150): SearchInputResult {
     const container = document.createElement('div');
     container.className = 'stoker-search';
     
@@ -331,8 +351,11 @@ export function createSearchInput(onSearch: (query: string) => void): SearchInpu
         attr: { placeholder: 'Search items...' }
     }) as HTMLInputElement;
     
+    // Debounce the search callback for better performance
+    const debouncedSearch = debounce(onSearch, debounceMs);
+    
     input.addEventListener('input', () => {
-        onSearch(input.value);
+        debouncedSearch(input.value);
     });
     
     return { container, input };

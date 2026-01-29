@@ -89,7 +89,13 @@ export function registerCommands(plugin: StokerPlugin): void {
                 return;
             }
             
-            const lowStock = plugin.store.getLowStockItems();
+            const store = plugin.store;
+            if (!store) {
+                new Notice('No active inventory list.');
+                return;
+            }
+            
+            const lowStock = store.getLowStockItems();
             
             if (lowStock.length === 0) {
                 new Notice('All items are well stocked!');

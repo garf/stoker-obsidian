@@ -1,7 +1,7 @@
-import { App, Modal, Setting, DropdownComponent, TextComponent } from 'obsidian';
+import { App, Modal, Setting, DropdownComponent, TextComponent, Notice } from 'obsidian';
 import type StokerPlugin from '../main';
 import { InventoryItem, UnitType } from '../types';
-import { validateItemName, validateCategoryName, validateUnit, sanitizeInput, showInputError, clearInputError } from '../utils/validation';
+import { validateItemName, validateCategoryName, validateUnit, validateMinimum, validateAmount, checkDuplicateName, sanitizeInput, showInputError, clearInputError } from '../utils/validation';
 
 export class EditItemModal extends Modal {
     plugin: StokerPlugin;
@@ -60,7 +60,8 @@ export class EditItemModal extends Modal {
         this.nameError = nameSetting.settingEl.createDiv({ cls: 'stoker-field-error' });
         
         // Category dropdown - only show existing categories from inventory
-        const categories = this.plugin.store.getCategories();
+        const store = this.plugin.store;
+        const categories = store ? store.getCategories() : [];
         
         new Setting(contentEl)
             .setName('Category')
@@ -303,7 +304,12 @@ export class EditItemModal extends Modal {
     }
 
     private async saveItem(): Promise<void> {
-        // Validate all inputs
+        const store = this.plugin.store;
+        if (!store) {
+            return;
+        }
+        
+        // Validate name
         const nameError = validateItemName(this.name);
         if (nameError) {
             showInputError(this.nameInput, this.nameError, nameError);
@@ -311,6 +317,16 @@ export class EditItemModal extends Modal {
             return;
         }
         
+        // Check for duplicate names in same category (exclude current item)
+        const existingItems = store.getItems();
+        const duplicateError = checkDuplicateName(this.name, this.category, existingItems, this.item.id);
+        if (duplicateError) {
+            showInputError(this.nameInput, this.nameError, duplicateError);
+            this.nameInput.focus();
+            return;
+        }
+        
+        // Validate unit for non-boolean and non-portion types
         if (this.unitType !== 'boolean' && this.unitType !== 'portion') {
             const unitError = validateUnit(this.unit, true);
             if (unitError) {
@@ -320,24 +336,54 @@ export class EditItemModal extends Modal {
             }
         }
         
-        await this.plugin.store.updateItem(this.item.id, {
-            name: sanitizeInput(this.name),
-            category: sanitizeInput(this.category),
-            unitType: this.unitType,
-            amount: this.amount,
-            unit: sanitizeInput(this.unit) || 'pcs',
-            minimum: this.minimum,
-            plannedRestock: this.plannedRestock,
-        });
+        // Validate amount
+        const amountError = validateAmount(this.amount, this.unitType);
+        if (amountError) {
+            showInputError(this.nameInput, this.nameError, amountError);
+            return;
+        }
         
-        this.close();
+        // Validate minimum threshold
+        const minimumError = validateMinimum(this.minimum);
+        if (minimumError) {
+            showInputError(this.nameInput, this.nameError, minimumError);
+            return;
+        }
+        
+        try {
+            await store.updateItem(this.item.id, {
+                name: sanitizeInput(this.name),
+                category: sanitizeInput(this.category),
+                unitType: this.unitType,
+                amount: this.amount,
+                unit: sanitizeInput(this.unit) || 'pcs',
+                minimum: this.minimum,
+                plannedRestock: this.plannedRestock,
+            });
+            
+            this.close();
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to save item';
+            new Notice(`Error: ${message}`);
+            console.error('Stoker: Failed to save item:', error);
+        }
     }
 
     private async deleteItem(): Promise<void> {
         // Confirm deletion
         const confirmed = await this.confirmDelete();
         if (confirmed) {
-            await this.plugin.store.deleteItem(this.item.id);
+            const store = this.plugin.store;
+            if (store) {
+                try {
+                    await store.deleteItem(this.item.id);
+                    new Notice(`Deleted "${this.item.name}"`);
+                } catch (error) {
+                    const message = error instanceof Error ? error.message : 'Failed to delete item';
+                    new Notice(`Error: ${message}`);
+                    console.error('Stoker: Failed to delete item:', error);
+                }
+            }
             this.close();
         }
     }

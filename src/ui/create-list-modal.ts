@@ -90,8 +90,9 @@ export class CreateListModal extends Modal {
         return `stoker-${safeName}.md`;
     }
 
-    private validateInputs(): boolean {
+    private validateInputs(): { valid: boolean; fileExists: boolean } {
         let isValid = true;
+        let fileExists = false;
         
         // Validate name
         const name = this.name.trim();
@@ -117,9 +118,15 @@ export class CreateListModal extends Modal {
         } else if (filePath.includes('..')) {
             this.showError(this.filePathInput, this.filePathError, 'Invalid file path');
             isValid = false;
+        } else {
+            // Check if file already exists on disk (but not tracked by plugin)
+            const existingFile = this.app.vault.getAbstractFileByPath(filePath);
+            if (existingFile) {
+                fileExists = true;
+            }
         }
         
-        return isValid;
+        return { valid: isValid, fileExists };
     }
 
     private showError(input: TextComponent, errorEl: HTMLElement, message: string): void {
@@ -134,12 +141,21 @@ export class CreateListModal extends Modal {
     }
 
     private async createList(): Promise<void> {
-        if (!this.validateInputs()) {
+        const validation = this.validateInputs();
+        if (!validation.valid) {
             return;
         }
         
         const name = sanitizeInput(this.name.trim());
         const filePath = this.filePath.trim();
+        
+        // If file exists, ask for confirmation
+        if (validation.fileExists) {
+            const confirmed = await this.confirmOverwrite(filePath);
+            if (!confirmed) {
+                return;
+            }
+        }
         
         try {
             await this.plugin.listManager.createList(name, filePath);
@@ -155,6 +171,37 @@ export class CreateListModal extends Modal {
             this.showError(this.filePathInput, this.filePathError, errorMessage);
             console.error('Stoker: Failed to create list:', error);
         }
+    }
+    
+    private async confirmOverwrite(filePath: string): Promise<boolean> {
+        return new Promise((resolve) => {
+            const { contentEl } = this;
+            contentEl.empty();
+            
+            contentEl.createEl('h2', { text: 'File already exists' });
+            contentEl.createEl('p', { 
+                text: `The file "${filePath}" already exists. Do you want to use it as an inventory list?`,
+                cls: 'stoker-modal-info'
+            });
+            contentEl.createEl('p', { 
+                text: 'Note: If this is already a Stoker inventory file, it will be added to your lists. Otherwise, it will be overwritten.',
+                cls: 'stoker-modal-warning'
+            });
+            
+            const buttonContainer = contentEl.createDiv({ cls: 'stoker-modal-buttons' });
+            
+            buttonContainer.createEl('button', { text: 'Cancel' })
+                .addEventListener('click', () => {
+                    this.onOpen(); // Re-render the form
+                    resolve(false);
+                });
+            
+            const confirmBtn = buttonContainer.createEl('button', { 
+                text: 'Use existing file',
+                cls: 'mod-warning'
+            });
+            confirmBtn.addEventListener('click', () => resolve(true));
+        });
     }
 
     onClose(): void {

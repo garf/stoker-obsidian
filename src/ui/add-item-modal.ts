@@ -1,7 +1,7 @@
-import { App, Modal, Setting, DropdownComponent, TextComponent } from 'obsidian';
+import { App, Modal, Setting, DropdownComponent, TextComponent, Notice } from 'obsidian';
 import type StokerPlugin from '../main';
 import { UnitType } from '../types';
-import { validateItemName, validateCategoryName, validateUnit, sanitizeInput, showInputError, clearInputError } from '../utils/validation';
+import { validateItemName, validateCategoryName, validateUnit, validateMinimum, validateAmount, checkDuplicateName, sanitizeInput, showInputError, clearInputError } from '../utils/validation';
 
 export class AddItemModal extends Modal {
     plugin: StokerPlugin;
@@ -49,7 +49,8 @@ export class AddItemModal extends Modal {
         this.nameError = nameSetting.settingEl.createDiv({ cls: 'stoker-field-error' });
         
         // Category dropdown - only show existing categories from inventory
-        const categories = this.plugin.store.getCategories();
+        const store = this.plugin.store;
+        const categories = store ? store.getCategories() : [];
         
         new Setting(contentEl)
             .setName('Category')
@@ -225,7 +226,12 @@ export class AddItemModal extends Modal {
     }
 
     private async addItem(): Promise<void> {
-        // Validate all inputs
+        const store = this.plugin.store;
+        if (!store) {
+            return; // No active list - shouldn't happen due to command guard
+        }
+        
+        // Validate name
         const nameError = validateItemName(this.name);
         if (nameError) {
             showInputError(this.nameInput, this.nameError, nameError);
@@ -233,6 +239,16 @@ export class AddItemModal extends Modal {
             return;
         }
         
+        // Check for duplicate names in same category
+        const existingItems = store.getItems();
+        const duplicateError = checkDuplicateName(this.name, this.category, existingItems);
+        if (duplicateError) {
+            showInputError(this.nameInput, this.nameError, duplicateError);
+            this.nameInput.focus();
+            return;
+        }
+        
+        // Validate unit for non-boolean and non-portion types
         if (this.unitType !== 'boolean' && this.unitType !== 'portion') {
             const unitError = validateUnit(this.unit, true);
             if (unitError) {
@@ -242,16 +258,37 @@ export class AddItemModal extends Modal {
             }
         }
         
-        await this.plugin.store.addItem({
-            name: sanitizeInput(this.name),
-            category: sanitizeInput(this.category),
-            unitType: this.unitType,
-            amount: this.unitType === 'boolean' ? true : this.amount,
-            unit: sanitizeInput(this.unit) || 'pcs',
-            minimum: this.minimum,
-        });
+        // Validate amount
+        const amountError = validateAmount(this.amount, this.unitType);
+        if (amountError) {
+            showInputError(this.nameInput, this.nameError, amountError);
+            return;
+        }
         
-        this.close();
+        // Validate minimum threshold
+        const minimumError = validateMinimum(this.minimum);
+        if (minimumError) {
+            showInputError(this.nameInput, this.nameError, minimumError);
+            return;
+        }
+        
+        try {
+            await store.addItem({
+                name: sanitizeInput(this.name),
+                category: sanitizeInput(this.category),
+                unitType: this.unitType,
+                amount: this.unitType === 'boolean' ? true : this.amount,
+                unit: sanitizeInput(this.unit) || 'pcs',
+                minimum: this.minimum,
+            });
+            
+            new Notice(`Added "${this.name}" to inventory`);
+            this.close();
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to add item';
+            new Notice(`Error: ${message}`);
+            console.error('Stoker: Failed to add item:', error);
+        }
     }
 
     onClose(): void {

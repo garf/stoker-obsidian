@@ -12,6 +12,10 @@ export class ReportView extends ItemView {
     plugin: StokerPlugin;
     private reportContentEl: HTMLElement;
     private currentReport: ReportType = 'shopping-list';
+    
+    // Listener cleanup tracking
+    private storeCallback: (() => void) | null = null;
+    private listChangeCallback: (() => void) | null = null;
 
     constructor(leaf: WorkspaceLeaf, plugin: StokerPlugin) {
         super(leaf);
@@ -23,6 +27,10 @@ export class ReportView extends ItemView {
     }
 
     getDisplayText(): string {
+        const activeList = this.plugin.listManager.getActiveList();
+        if (activeList) {
+            return `Report: ${activeList.name}`;
+        }
         return 'Inventory Report';
     }
 
@@ -78,18 +86,36 @@ export class ReportView extends ItemView {
         // Report content
         this.reportContentEl = container.createDiv({ cls: 'stoker-report-content' });
         
-        // Register for changes
-        this.plugin.store.onInventoryChange(() => this.renderReport());
+        // Register for changes (if there's an active store)
+        this.storeCallback = () => this.renderReport();
+        const store = this.plugin.store;
+        if (store) {
+            store.onInventoryChange(this.storeCallback);
+        }
         
         // Register for list changes
-        this.plugin.listManager.onListChange(() => this.renderReport());
+        this.listChangeCallback = () => this.renderReport();
+        this.plugin.listManager.onListChange(this.listChangeCallback);
         
         // Initial render
         this.renderReport();
     }
 
     async onClose(): Promise<void> {
-        // Cleanup
+        // Remove store listener
+        if (this.storeCallback) {
+            const store = this.plugin.store;
+            if (store) {
+                store.offInventoryChange(this.storeCallback);
+            }
+            this.storeCallback = null;
+        }
+        
+        // Remove list change listener
+        if (this.listChangeCallback) {
+            this.plugin.listManager.offListChange(this.listChangeCallback);
+            this.listChangeCallback = null;
+        }
     }
 
     private renderReport(): void {
@@ -102,27 +128,30 @@ export class ReportView extends ItemView {
             return;
         }
         
+        const store = this.plugin.store;
+        if (!store) {
+            this.renderNoListState();
+            return;
+        }
+        
         switch (this.currentReport) {
             case 'shopping-list':
-                this.renderShoppingList();
+                this.renderShoppingList(store);
                 break;
             case 'low-stock':
-                this.renderLowStockReport();
+                this.renderLowStockReport(store);
                 break;
             case 'full-inventory':
-                this.renderFullInventory();
+                this.renderFullInventory(store);
                 break;
         }
     }
 
-    private renderShoppingList(): void {
-        const items = this.plugin.store.getItems();
+    private renderShoppingList(store: import('../data/inventory-store').InventoryStore): void {
+        const items = store.getItems();
         
-        // Items marked for restock OR out of stock
-        const shoppingItems = items.filter(item => {
-            const status = this.plugin.store.getStockStatus(item);
-            return item.plannedRestock || status === 'out';
-        });
+        // Only items explicitly marked for restock
+        const shoppingItems = items.filter(item => item.plannedRestock);
         
         if (shoppingItems.length === 0) {
             this.renderEmptyState('Your shopping list is empty', 'shopping-cart');
@@ -145,12 +174,12 @@ export class ReportView extends ItemView {
         this.renderItemsByCategory(shoppingItems, true);
     }
 
-    private renderLowStockReport(): void {
-        const items = this.plugin.store.getItems();
+    private renderLowStockReport(store: import('../data/inventory-store').InventoryStore): void {
+        const items = store.getItems();
         
         // Almost running out + out of stock
         const lowStockItems = items.filter(item => {
-            const status = this.plugin.store.getStockStatus(item);
+            const status = store.getStockStatus(item);
             return status === 'warning' || status === 'out';
         });
         
@@ -161,10 +190,10 @@ export class ReportView extends ItemView {
         
         // Count by status
         const warningItems = lowStockItems.filter(item => 
-            this.plugin.store.getStockStatus(item) === 'warning'
+            store.getStockStatus(item) === 'warning'
         );
         const outItems = lowStockItems.filter(item => 
-            this.plugin.store.getStockStatus(item) === 'out'
+            store.getStockStatus(item) === 'out'
         );
         
         // Header
@@ -213,8 +242,8 @@ export class ReportView extends ItemView {
         }
     }
 
-    private renderFullInventory(): void {
-        const items = this.plugin.store.getItems();
+    private renderFullInventory(store: import('../data/inventory-store').InventoryStore): void {
+        const items = store.getItems();
         
         if (items.length === 0) {
             this.renderEmptyState('Your inventory is empty', 'package');
@@ -223,14 +252,14 @@ export class ReportView extends ItemView {
         
         // Group by status
         const inStockItems = items.filter(item => {
-            const status = this.plugin.store.getStockStatus(item);
+            const status = store.getStockStatus(item);
             return status === 'normal' || status === 'in-stock';
         });
         const warningItems = items.filter(item => 
-            this.plugin.store.getStockStatus(item) === 'warning'
+            store.getStockStatus(item) === 'warning'
         );
         const outItems = items.filter(item => 
-            this.plugin.store.getStockStatus(item) === 'out'
+            store.getStockStatus(item) === 'out'
         );
         
         // Header
@@ -354,7 +383,8 @@ export class ReportView extends ItemView {
             li.createEl('span', { cls: 'stoker-report-checkbox', text: '☐' });
         }
         
-        const status = this.plugin.store.getStockStatus(item);
+        const store = this.plugin.store;
+        const status = store ? store.getStockStatus(item) : 'normal';
         const statusClass = status === 'out' ? 'stoker-report-item--out' : 
                            status === 'warning' ? 'stoker-report-item--warning' : '';
         if (statusClass) {

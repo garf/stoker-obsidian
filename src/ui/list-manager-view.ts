@@ -6,10 +6,21 @@ import { INVENTORY_VIEW_TYPE } from './inventory-leaf-view';
 
 export const LIST_MANAGER_VIEW_TYPE = 'stoker-list-manager-view';
 
+interface ListStats {
+    total: number;
+    warning: number;
+    outOfStock: number;
+}
+
 export class ListManagerView extends ItemView {
     plugin: StokerPlugin;
     private listContentEl: HTMLElement;
     private fileModifyHandler: ((file: any) => void) | null = null;
+    private listChangeCallback: (() => void) | null = null;
+    
+    // Stats cache to avoid redundant file loads
+    private statsCache: Map<string, ListStats> = new Map();
+    private statsCacheValid: Set<string> = new Set();
 
     constructor(leaf: WorkspaceLeaf, plugin: StokerPlugin) {
         super(leaf);
@@ -54,12 +65,21 @@ export class ListManagerView extends ItemView {
         this.listContentEl = container.createDiv({ cls: 'stoker-list-manager-content' });
         
         // Register for list changes
-        this.plugin.listManager.onListChange(() => this.refresh());
+        this.listChangeCallback = () => {
+            this.invalidateStatsCache();
+            this.refresh();
+        };
+        this.plugin.listManager.onListChange(this.listChangeCallback);
         
         // Watch for file modifications to any inventory file
         this.fileModifyHandler = (file: any) => {
             const filePaths = this.plugin.listManager.getAllFilePaths();
             if (filePaths.includes(file.path)) {
+                // Invalidate cache for this file
+                const list = this.plugin.listManager.getLists().find(l => l.filePath === file.path);
+                if (list) {
+                    this.statsCacheValid.delete(list.id);
+                }
                 // Debounce refresh to avoid too many updates
                 setTimeout(() => this.refresh(), 100);
             }
@@ -71,7 +91,12 @@ export class ListManagerView extends ItemView {
     }
 
     async onClose(): Promise<void> {
-        // Event listeners are automatically cleaned up by registerEvent
+        // Remove list change listener
+        if (this.listChangeCallback) {
+            this.plugin.listManager.offListChange(this.listChangeCallback);
+            this.listChangeCallback = null;
+        }
+        // Note: registerEvent listeners are automatically cleaned up by Obsidian
     }
 
     async refresh(): Promise<void> {
@@ -185,20 +210,35 @@ export class ListManagerView extends ItemView {
 
     /**
      * Get statistics for a list (total items, warning count, out of stock count)
+     * Uses cache to avoid redundant file loads
      */
-    private async getListStats(list: InventoryList): Promise<{ total: number; warning: number; outOfStock: number }> {
+    private async getListStats(list: InventoryList): Promise<ListStats> {
+        // Return cached stats if valid
+        if (this.statsCacheValid.has(list.id)) {
+            const cached = this.statsCache.get(list.id);
+            if (cached) {
+                return cached;
+            }
+        }
+        
         try {
             // Check if file exists first
             if (!this.plugin.listManager.fileExists(list.filePath)) {
-                return { total: 0, warning: 0, outOfStock: 0 };
+                const stats = { total: 0, warning: 0, outOfStock: 0 };
+                this.statsCache.set(list.id, stats);
+                this.statsCacheValid.add(list.id);
+                return stats;
             }
 
             const store = await this.plugin.listManager.getStore(list.id);
             if (!store) {
-                return { total: 0, warning: 0, outOfStock: 0 };
+                const stats = { total: 0, warning: 0, outOfStock: 0 };
+                this.statsCache.set(list.id, stats);
+                this.statsCacheValid.add(list.id);
+                return stats;
             }
             
-            // Always reload from file to get fresh data
+            // Load from file only when cache is invalid
             await store.load();
             
             const items = store.getItems();
@@ -214,11 +254,25 @@ export class ListManagerView extends ItemView {
                 }
             }
             
-            return { total: items.length, warning, outOfStock };
+            const stats = { total: items.length, warning, outOfStock };
+            this.statsCache.set(list.id, stats);
+            this.statsCacheValid.add(list.id);
+            
+            return stats;
         } catch (error) {
             console.error('Stoker: Failed to get list stats:', error);
-            return { total: 0, warning: 0, outOfStock: 0 };
+            const stats = { total: 0, warning: 0, outOfStock: 0 };
+            this.statsCache.set(list.id, stats);
+            this.statsCacheValid.add(list.id);
+            return stats;
         }
+    }
+    
+    /**
+     * Invalidate all stats cache (used when lists change)
+     */
+    private invalidateStatsCache(): void {
+        this.statsCacheValid.clear();
     }
 
     private showListMenu(e: MouseEvent, list: InventoryList, isActive: boolean): void {
