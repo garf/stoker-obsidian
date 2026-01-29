@@ -32,7 +32,7 @@ export class AddItemModal extends Modal {
         // Name input
         const nameSetting = new Setting(contentEl)
             .setName('Item name')
-            .setDesc('Name of the food item (no | [ ] characters)')
+            .setDesc('Name of the item (no | [ ] characters)')
             .addText(text => {
                 this.nameInput = text.inputEl;
                 text.setPlaceholder('e.g., Milk')

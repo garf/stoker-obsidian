@@ -46,48 +46,15 @@ export class StokerSettingTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 }));
         
-        // Default categories
-        containerEl.createEl('h3', { text: 'Default categories' });
-        containerEl.createEl('p', { 
-            text: 'Categories shown when adding new items. One per line.',
-            cls: 'setting-item-description'
-        });
-        
-        const categoriesTextArea = containerEl.createEl('textarea', {
-            cls: 'stoker-categories-textarea'
-        });
-        categoriesTextArea.value = this.plugin.settings.defaultCategories.join('\n');
-        categoriesTextArea.rows = 8;
-        categoriesTextArea.addEventListener('change', async () => {
-            const categories = categoriesTextArea.value
-                .split('\n')
-                .map(c => c.trim())
-                .filter(c => c.length > 0);
-            this.plugin.settings.defaultCategories = categories;
-            await this.plugin.saveSettings();
-        });
-        
-        // Reset to defaults button
-        new Setting(containerEl)
-            .setName('Reset categories')
-            .setDesc('Reset the default categories to the original list')
-            .addButton(button => button
-                .setButtonText('Reset')
-                .onClick(async () => {
-                    this.plugin.settings.defaultCategories = [...DEFAULT_SETTINGS.defaultCategories];
-                    await this.plugin.saveSettings();
-                    categoriesTextArea.value = this.plugin.settings.defaultCategories.join('\n');
-                }));
-        
         // About section
         containerEl.createEl('h3', { text: 'About' });
         
         const aboutDiv = containerEl.createDiv({ cls: 'stoker-about' });
         aboutDiv.createEl('p', { 
-            text: 'Stoker helps you track your food inventory. Add items, set minimum thresholds, and get warnings when running low.' 
+            text: 'Stoker helps you track your inventory. Add items, set minimum thresholds, and get warnings when running low.' 
         });
         aboutDiv.createEl('p', { 
-            text: 'You can create multiple inventory lists (e.g., home, office, vacation house), each stored in a separate markdown file that syncs with Obsidian Sync.' 
+            text: 'You can create multiple inventory lists (e.g., home supplies, office equipment, workshop tools), each stored in a separate markdown file that syncs with Obsidian Sync.' 
         });
     }
 

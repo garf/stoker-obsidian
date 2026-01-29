@@ -15,7 +15,7 @@ export function registerCommands(plugin: StokerPlugin): void {
     // Open inventory view
     plugin.addCommand({
         id: 'open-inventory',
-        name: 'Open food inventory',
+        name: 'Open inventory',
         callback: async () => {
             const { workspace } = plugin.app;
             

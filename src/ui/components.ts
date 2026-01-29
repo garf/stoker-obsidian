@@ -1,14 +1,14 @@
 import { setIcon } from 'obsidian';
-import { FoodItem, StockStatus } from '../types';
+import { InventoryItem, StockStatus } from '../types';
 import { InventoryStore } from '../data/inventory-store';
 
 /**
  * Create an item row element for the inventory list
  */
 export function createItemRow(
-    item: FoodItem,
+    item: InventoryItem,
     store: InventoryStore,
-    onEdit: (item: FoodItem) => void,
+    onEdit: (item: InventoryItem) => void,
     onRefresh: () => void
 ): HTMLElement {
     const status = store.getStockStatus(item);
@@ -162,7 +162,7 @@ interface ProgressBarData {
  * - At 0.5x minimum: 25% yellow (below threshold)
  * - At 0: 0% red (out of stock)
  */
-function getProgressBarData(item: FoodItem, status: StockStatus): ProgressBarData {
+function getProgressBarData(item: InventoryItem, status: StockStatus): ProgressBarData {
     // Don't show for boolean items or items without minimum
     if (item.unitType === 'boolean' || item.minimum === undefined) {
         return { show: false, percent: 0, color: 'green' };
@@ -210,7 +210,7 @@ function formatNumber(value: number): string {
 /**
  * Format the amount display for an item
  */
-export function formatAmount(item: FoodItem): string {
+export function formatAmount(item: InventoryItem): string {
     if (item.unitType === 'boolean') {
         return item.amount ? 'In stock' : 'Out of stock';
     }

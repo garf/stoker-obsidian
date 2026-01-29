@@ -1,6 +1,6 @@
 import { TFile, Vault, Events } from 'obsidian';
 import { 
-    FoodItem, 
+    InventoryItem, 
     InventoryData, 
     InventoryEventType, 
     InventoryEventCallback,
@@ -13,7 +13,7 @@ import {
 export class InventoryStore extends Events {
     private vault: Vault;
     private filePath: string;
-    private items: FoodItem[] = [];
+    private items: InventoryItem[] = [];
     private version = 1;
     private lastUpdated: string = new Date().toISOString().split('T')[0] ?? '';
     private listeners: InventoryEventCallback[] = [];
@@ -34,7 +34,7 @@ export class InventoryStore extends Events {
     /**
      * Get the stock status for an item
      */
-    getStockStatus(item: FoodItem): StockStatus {
+    getStockStatus(item: InventoryItem): StockStatus {
         if (item.unitType === 'boolean') {
             return item.amount ? 'in-stock' : 'out';
         }
@@ -112,12 +112,12 @@ export class InventoryStore extends Events {
     /**
      * Parse a single item's content string
      */
-    private parseItemContent(content: string, category: string, statusChar: string): FoodItem | null {
+    private parseItemContent(content: string, category: string, statusChar: string): InventoryItem | null {
         const parts = content.split('|').map(p => p.trim());
         if (parts.length === 0) return null;
         
         const name = parts[0] ?? '';
-        let unitType: FoodItem['unitType'] = 'count';
+        let unitType: InventoryItem['unitType'] = 'count';
         let amount: number | boolean = 0;
         let unit = 'pcs';
         let minimum: number | undefined;
@@ -214,7 +214,7 @@ export class InventoryStore extends Events {
         lines.push('');
         
         // Group items by category
-        const categorized = new Map<string, FoodItem[]>();
+        const categorized = new Map<string, InventoryItem[]>();
         
         for (const item of this.items) {
             const cat = item.category || '';
@@ -251,7 +251,7 @@ export class InventoryStore extends Events {
     /**
      * Convert a single item to a markdown line
      */
-    private itemToMarkdownLine(item: FoodItem): string {
+    private itemToMarkdownLine(item: InventoryItem): string {
         const status = this.getStockStatus(item);
         let statusChar: string;
         
@@ -345,15 +345,15 @@ export class InventoryStore extends Events {
     /**
      * Get all items
      */
-    getItems(): FoodItem[] {
+    getItems(): InventoryItem[] {
         return [...this.items];
     }
 
     /**
      * Get items grouped by category
      */
-    getItemsByCategory(): Map<string, FoodItem[]> {
-        const grouped = new Map<string, FoodItem[]>();
+    getItemsByCategory(): Map<string, InventoryItem[]> {
+        const grouped = new Map<string, InventoryItem[]>();
         
         for (const item of this.items) {
             const cat = item.category || '';
@@ -382,15 +382,15 @@ export class InventoryStore extends Events {
     /**
      * Get a single item by ID
      */
-    getItem(id: string): FoodItem | undefined {
+    getItem(id: string): InventoryItem | undefined {
         return this.items.find(item => item.id === id);
     }
 
     /**
      * Add a new item
      */
-    async addItem(item: Omit<FoodItem, 'id'>): Promise<FoodItem> {
-        const newItem: FoodItem = {
+    async addItem(item: Omit<InventoryItem, 'id'>): Promise<InventoryItem> {
+        const newItem: InventoryItem = {
             ...item,
             id: this.generateId(),
         };
@@ -405,14 +405,14 @@ export class InventoryStore extends Events {
     /**
      * Update an existing item
      */
-    async updateItem(id: string, updates: Partial<Omit<FoodItem, 'id'>>): Promise<FoodItem | null> {
+    async updateItem(id: string, updates: Partial<Omit<InventoryItem, 'id'>>): Promise<InventoryItem | null> {
         const index = this.items.findIndex(item => item.id === id);
         if (index === -1) return null;
         
         const currentItem = this.items[index];
         if (!currentItem) return null;
         
-        const updatedItem: FoodItem = {
+        const updatedItem: InventoryItem = {
             id: currentItem.id,
             name: updates.name ?? currentItem.name,
             category: updates.category ?? currentItem.category,
@@ -448,7 +448,7 @@ export class InventoryStore extends Events {
     /**
      * Increase item amount
      */
-    async increaseAmount(id: string, by = 1): Promise<FoodItem | null> {
+    async increaseAmount(id: string, by = 1): Promise<InventoryItem | null> {
         const item = this.getItem(id);
         if (!item || item.unitType === 'boolean') return null;
         
@@ -460,7 +460,7 @@ export class InventoryStore extends Events {
     /**
      * Decrease item amount
      */
-    async decreaseAmount(id: string, by = 1): Promise<FoodItem | null> {
+    async decreaseAmount(id: string, by = 1): Promise<InventoryItem | null> {
         const item = this.getItem(id);
         if (!item || item.unitType === 'boolean') return null;
         
@@ -473,7 +473,7 @@ export class InventoryStore extends Events {
     /**
      * Toggle boolean item stock status
      */
-    async toggleStock(id: string): Promise<FoodItem | null> {
+    async toggleStock(id: string): Promise<InventoryItem | null> {
         const item = this.getItem(id);
         if (!item || item.unitType !== 'boolean') return null;
         
@@ -485,7 +485,7 @@ export class InventoryStore extends Events {
     /**
      * Toggle planned restock status
      */
-    async togglePlannedRestock(id: string): Promise<FoodItem | null> {
+    async togglePlannedRestock(id: string): Promise<InventoryItem | null> {
         const item = this.getItem(id);
         if (!item) return null;
         
@@ -497,14 +497,14 @@ export class InventoryStore extends Events {
     /**
      * Get items marked for planned restock
      */
-    getPlannedRestockItems(): FoodItem[] {
+    getPlannedRestockItems(): InventoryItem[] {
         return this.items.filter(item => item.plannedRestock);
     }
 
     /**
      * Get items with low stock (below minimum)
      */
-    getLowStockItems(): FoodItem[] {
+    getLowStockItems(): InventoryItem[] {
         return this.items.filter(item => {
             const status = this.getStockStatus(item);
             return status === 'warning' || status === 'out';
@@ -531,7 +531,7 @@ export class InventoryStore extends Events {
     /**
      * Notify all listeners of a change
      */
-    private notifyListeners(type: InventoryEventType, item?: FoodItem): void {
+    private notifyListeners(type: InventoryEventType, item?: InventoryItem): void {
         for (const listener of this.listeners) {
             listener(type, item);
         }

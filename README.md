@@ -1,90 +1,98 @@
-# Obsidian Sample Plugin
+# Stoker - Inventory Tracker for Obsidian
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+Track any inventory in your Obsidian vault. Monitor stock levels, set minimum thresholds, get warnings when running low, and generate shopping lists.
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+## Features
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open modal (simple)" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+- **Track anything**: Products, supplies, tools, collectibles - whatever you need to keep stock of
+- **Multiple lists**: Create separate inventory lists (home, office, workshop) each stored in a markdown file
+- **Stock status tracking**: Visual indicators for normal, low, and out-of-stock items
+- **Minimum thresholds**: Set warning levels for each item
+- **Shopping list**: Mark items for restock and generate shopping lists
+- **Unit types**: Support for count, portion, weight, volume, and boolean (in/out of stock)
+- **Categories**: Organize items by custom categories (created dynamically as you add items)
+- **Reports**: Generate printable inventory reports
+- **Syncs with Obsidian Sync**: All data stored in standard markdown files
 
-## First time developing plugins?
+## Installation
 
-Quick starting guide for new plugin devs:
+### From Obsidian Community Plugins
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+1. Open **Settings → Community plugins**
+2. Select **Browse** and search for "Stoker"
+3. Select **Install**, then **Enable**
 
-## Releasing new releases
+### Manual Installation
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+1. Download `main.js`, `manifest.json`, and `styles.css` from the latest release
+2. Create a folder `<vault>/.obsidian/plugins/stoker-plugin/`
+3. Copy the downloaded files into this folder
+4. Reload Obsidian and enable the plugin in **Settings → Community plugins**
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+## Usage
 
-## Adding your plugin to the community plugin list
+### Getting Started
 
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+1. Click the package icon in the ribbon or run the command **Stoker: Open inventory**
+2. Create your first inventory list when prompted
+3. Add items using the **Add item** button
 
-## How to use
+### Managing Items
 
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+- Click an item row to edit it
+- Use **+/-** buttons to quickly adjust amounts
+- Click the shopping cart icon to mark items for restock
+- Set minimum thresholds to get low-stock warnings
 
-## Manually installing the plugin
+### Categories
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
+Categories are created automatically when you add items. To manage categories:
+1. Open the inventory view
+2. Click the settings icon next to the category filter
+3. Rename or delete categories as needed
 
-## Improve code quality with eslint
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- This project already has eslint preconfigured, you can invoke a check by running`npm run lint`
-- Together with a custom eslint [plugin](https://github.com/obsidianmd/eslint-plugin) for Obsidan specific code guidelines.
-- A GitHub action is preconfigured to automatically lint every commit on all branches.
+### Multiple Lists
 
-## Funding URL
+Create separate lists for different locations or purposes:
+1. Open **Settings → Stoker settings**
+2. Click **Open list manager**
+3. Create new lists or switch between existing ones
 
-You can include funding URLs where people who use your plugin can financially support it.
+## Commands
 
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
+- **Open inventory**: Open the main inventory view
+- **Add new item to inventory**: Quick add without opening the view
+- **Toggle inventory sidebar**: Show/hide the sidebar panel
+- **Show low stock items**: Filter to items needing attention
+- **Open inventory report**: Generate printable reports
+- **Open inventory list manager**: Manage multiple lists
+- **Switch to inventory list...**: Quick list switcher
+- **Create new inventory list**: Create a new list
 
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
+## Data Format
+
+Inventory data is stored in markdown files with the following format:
+
+```markdown
+---
+stoker-plugin: inventory
+version: 1
+lastUpdated: 2025-01-29
+---
+
+## Category Name
+
+- [ ] Item Name | 5 pcs | min: 2
+- [!] Low Stock Item | 1 pcs | min: 3
+- [-] Out of Stock | 0 pcs
+- [x] Boolean Item | in stock
 ```
 
-If you have multiple URLs, you can also do:
+## Support
 
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
-```
+- Report issues on [GitHub](https://github.com/garf/stoker-plugin)
+- For questions, use GitHub Discussions
 
-## API Documentation
+## License
 
-See https://docs.obsidian.md
+0-BSD License - see [LICENSE](LICENSE)

@@ -1,7 +1,7 @@
 {
 	"name": "stoker-plugin",
 	"version": "1.0.0",
-	"description": "Food inventory tracker for Obsidian - track your stock levels and get low-stock warnings",
+	"description": "Inventory tracker for Obsidian - track stock levels and get low-stock warnings",
 	"main": "main.js",
 	"type": "module",
 	"scripts": {

@@ -1,6 +1,6 @@
 import { ItemView, WorkspaceLeaf, Menu, setIcon } from 'obsidian';
 import type StokerPlugin from '../main';
-import { FoodItem } from '../types';
+import { InventoryItem } from '../types';
 import { 
     createItemRow, 
     createCategoryHeader, 
@@ -42,7 +42,7 @@ export class InventoryLeafView extends ItemView {
     }
 
     getDisplayText(): string {
-        return 'Food Inventory';
+        return 'Inventory';
     }
 
     getIcon(): string {
@@ -58,7 +58,7 @@ export class InventoryLeafView extends ItemView {
         const header = container.createDiv({ cls: 'stoker-view-header' });
         
         const titleRow = header.createDiv({ cls: 'stoker-title-row' });
-        titleRow.createEl('h2', { text: 'Food Inventory' });
+        titleRow.createEl('h2', { text: 'Inventory' });
         
         // Shopping list button (toggles filter)
         this.shoppingBtn = titleRow.createEl('button', { cls: 'stoker-shopping-btn' });
@@ -417,7 +417,7 @@ export class InventoryLeafView extends ItemView {
         }
     }
 
-    private applyFilter(items: FoodItem[]): FoodItem[] {
+    private applyFilter(items: InventoryItem[]): InventoryItem[] {
         switch (this.filterBy) {
             case 'in-stock-enough':
                 // Items with normal stock levels (above minimum or no minimum set)
@@ -451,7 +451,7 @@ export class InventoryLeafView extends ItemView {
         }
     }
 
-    private renderStats(items: FoodItem[]): void {
+    private renderStats(items: InventoryItem[]): void {
         const stats = this.inventoryContentEl.createDiv({ cls: 'stoker-stats' });
         
         const total = items.length;
@@ -473,9 +473,9 @@ export class InventoryLeafView extends ItemView {
         }
     }
 
-    private renderByCategory(items: FoodItem[]): void {
+    private renderByCategory(items: InventoryItem[]): void {
         // Group items by category
-        const grouped = new Map<string, FoodItem[]>();
+        const grouped = new Map<string, InventoryItem[]>();
         
         for (const item of items) {
             const cat = item.category || '';
@@ -533,7 +533,7 @@ export class InventoryLeafView extends ItemView {
         }
     }
 
-    private renderFlat(items: FoodItem[]): void {
+    private renderFlat(items: InventoryItem[]): void {
         // Sort items based on sort option
         const sorted = [...items].sort((a, b) => {
             switch (this.sortBy) {
@@ -574,7 +574,7 @@ export class InventoryLeafView extends ItemView {
         });
     }
 
-    private openEditModal(item: FoodItem): void {
+    private openEditModal(item: InventoryItem): void {
         import('./edit-item-modal').then(({ EditItemModal }) => {
             new EditItemModal(this.app, this.plugin, item).open();
         });

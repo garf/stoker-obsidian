@@ -1,6 +1,6 @@
 import { ItemView, WorkspaceLeaf, setIcon } from 'obsidian';
 import type StokerPlugin from '../main';
-import { FoodItem, StockStatus } from '../types';
+import { InventoryItem, StockStatus } from '../types';
 import { formatAmount } from './components';
 import { LIST_MANAGER_VIEW_TYPE } from './list-manager-view';
 
@@ -305,9 +305,9 @@ export class ReportView extends ItemView {
         empty.createDiv({ cls: 'stoker-report-empty-text', text: message });
     }
 
-    private renderItemsByCategory(items: FoodItem[], showCheckbox: boolean): void {
+    private renderItemsByCategory(items: InventoryItem[], showCheckbox: boolean): void {
         // Group by category
-        const grouped = new Map<string, FoodItem[]>();
+        const grouped = new Map<string, InventoryItem[]>();
         for (const item of items) {
             const cat = item.category || 'Uncategorized';
             if (!grouped.has(cat)) {
@@ -340,14 +340,14 @@ export class ReportView extends ItemView {
         }
     }
 
-    private renderItemList(items: FoodItem[]): void {
+    private renderItemList(items: InventoryItem[]): void {
         const list = this.reportContentEl.createEl('ul', { cls: 'stoker-report-list' });
         for (const item of items.sort((a, b) => a.name.localeCompare(b.name))) {
             this.renderListItem(list, item, false);
         }
     }
 
-    private renderListItem(list: HTMLUListElement, item: FoodItem, showCheckbox: boolean): void {
+    private renderListItem(list: HTMLUListElement, item: InventoryItem, showCheckbox: boolean): void {
         const li = list.createEl('li', { cls: 'stoker-report-item' });
         
         if (showCheckbox) {

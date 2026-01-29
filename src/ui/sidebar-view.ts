@@ -1,6 +1,6 @@
 import { ItemView, WorkspaceLeaf, setIcon, Menu } from 'obsidian';
 import type StokerPlugin from '../main';
-import { FoodItem, InventoryList } from '../types';
+import { InventoryItem, InventoryList } from '../types';
 import { 
     createItemRow, 
     createCategoryHeader, 
@@ -47,7 +47,7 @@ export class StokerSidebarView extends ItemView {
         
         // Title row with list name
         const titleRow = header.createDiv({ cls: 'stoker-sidebar-title-row' });
-        titleRow.createEl('h4', { text: 'Food Inventory' });
+        titleRow.createEl('h4', { text: 'Inventory' });
         
         // Add button in header
         const addBtn = createAddButton(() => this.openAddModal());
@@ -452,7 +452,7 @@ export class StokerSidebarView extends ItemView {
         });
     }
 
-    private openEditModal(item: FoodItem): void {
+    private openEditModal(item: InventoryItem): void {
         import('./edit-item-modal').then(({ EditItemModal }) => {
             new EditItemModal(this.app, this.plugin, item).open();
         });

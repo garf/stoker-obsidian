@@ -1,0 +1,67 @@
+# Stoker Plugin - Project Context
+
+## Overview
+
+Stoker is a **product-agnostic inventory tracking plugin** for Obsidian. Users can track any type of inventory - supplies, tools, collectibles, equipment, or anything else they need to monitor stock levels for.
+
+## Key Architecture
+
+### Data Layer
+
+- **`InventoryStore`** (`src/data/inventory-store.ts`): Core data management class that handles CRUD operations for inventory items. Stores data in markdown files with YAML frontmatter.
+- **`ListManager`** (`src/data/list-manager.ts`): Manages multiple inventory lists. Each list is a separate markdown file that can be synced via Obsidian Sync.
+
+### Main Types (`src/types.ts`)
+
+- **`InventoryItem`**: Represents a single item with name, category, amount, unit, minimum threshold, and restock flag
+- **`InventoryList`**: Represents an inventory list (id, name, filePath)
+- **`StokerSettings`**: Plugin settings including list references and UI preferences
+- **`UnitType`**: `'count' | 'portion' | 'weight' | 'volume' | 'boolean'`
+- **`StockStatus`**: `'normal' | 'warning' | 'out' | 'in-stock'`
+
+### UI Layer (`src/ui/`)
+
+- **`sidebar-view.ts`**: Compact sidebar panel for quick inventory access
+- **`inventory-leaf-view.ts`**: Full inventory view with search, sort, and filter
+- **`report-view.ts`**: Printable reports (shopping list, low stock, full inventory)
+- **`list-manager-view.ts`**: UI for managing multiple inventory lists
+- **`add-item-modal.ts`** / **`edit-item-modal.ts`**: Item creation/editing modals
+- **`category-modal.ts`**: Category management (rename, delete)
+- **`components.ts`**: Reusable UI components
+
+### Commands (`src/commands/index.ts`)
+
+All user-facing commands are registered here. Command IDs are stable and should not be renamed after release.
+
+## Category System
+
+**Important**: Categories are dynamically pulled from each stock file, NOT from global settings. When adding/editing items, the category dropdown shows only categories that exist in the current inventory file, plus an option to create a new one. There are no "default categories" stored in settings.
+
+## Data Storage Format
+
+Inventory files use markdown with YAML frontmatter:
+
+```markdown
+---
+stoker-plugin: inventory
+version: 1
+lastUpdated: 2025-01-29
+---
+
+## Category Name
+
+- [ ] Normal Item | 5 pcs | min: 2
+- [!] Warning Item | 1 pcs | min: 3
+- [-] Out of Stock | 0 pcs
+- [x] Boolean In Stock | in stock
+- [-] Boolean Out | out of stock
+```
+
+Status characters: `[ ]` = normal, `[!]` = warning, `[-]` = out, `[x]` = in-stock (boolean)
+
+## Development Notes
+
+- Entry point: `src/main.ts` (minimal, delegates to modules)
+- Build: `npm run build` (esbuild)
+- Dev: `npm run dev` (watch mode)
+- Plugin artifacts: `main.js`, `manifest.json`, `styles.css` at root

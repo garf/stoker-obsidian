@@ -9,9 +9,9 @@ export type UnitType = 'count' | 'portion' | 'weight' | 'volume' | 'boolean';
 export type StockStatus = 'normal' | 'warning' | 'out' | 'in-stock';
 
 /**
- * Represents a single food item in the inventory
+ * Represents a single inventory item
  */
-export interface FoodItem {
+export interface InventoryItem {
     /** Unique identifier for the item */
     id: string;
     /** Display name of the item */
@@ -62,8 +62,6 @@ export interface StokerSettings {
     lists: InventoryList[];
     /** ID of the currently active list */
     activeListId: string | null;
-    /** Default categories to show */
-    defaultCategories: string[];
     /** Whether to show sidebar on startup */
     showSidebarOnStartup: boolean;
     /** Collapsed state of categories */
@@ -77,7 +75,6 @@ export const DEFAULT_SETTINGS: StokerSettings = {
     inventoryFilePath: 'stoker-inventory.md',
     lists: [],
     activeListId: null,
-    defaultCategories: ['Dairy', 'Meat', 'Vegetables', 'Fruits', 'Grains', 'Beverages', 'Snacks'],
     showSidebarOnStartup: true,
     collapsedCategories: [],
 };
@@ -90,8 +87,8 @@ export interface InventoryData {
     version: number;
     /** Last update timestamp */
     lastUpdated: string;
-    /** All food items */
-    items: FoodItem[];
+    /** All inventory items */
+    items: InventoryItem[];
 }
 
 /**
@@ -102,7 +99,7 @@ export type InventoryEventType = 'item-added' | 'item-updated' | 'item-deleted' 
 /**
  * Callback for inventory change events
  */
-export type InventoryEventCallback = (type: InventoryEventType, item?: FoodItem) => void;
+export type InventoryEventCallback = (type: InventoryEventType, item?: InventoryItem) => void;
 
 /**
  * Event types for list management changes

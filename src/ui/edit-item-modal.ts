@@ -1,11 +1,11 @@
 import { App, Modal, Setting, DropdownComponent, TextComponent } from 'obsidian';
 import type StokerPlugin from '../main';
-import { FoodItem, UnitType } from '../types';
+import { InventoryItem, UnitType } from '../types';
 import { validateItemName, validateCategoryName, validateUnit, sanitizeInput, showInputError, clearInputError } from '../utils/validation';
 
 export class EditItemModal extends Modal {
     plugin: StokerPlugin;
-    item: FoodItem;
+    item: InventoryItem;
     
     private name: string;
     private category: string;
@@ -19,7 +19,7 @@ export class EditItemModal extends Modal {
     private nameError: HTMLElement;
     private unitInputEl: HTMLInputElement;
 
-    constructor(app: App, plugin: StokerPlugin, item: FoodItem) {
+    constructor(app: App, plugin: StokerPlugin, item: InventoryItem) {
         super(app);
         this.plugin = plugin;
         this.item = item;
@@ -43,7 +43,7 @@ export class EditItemModal extends Modal {
         // Name input
         const nameSetting = new Setting(contentEl)
             .setName('Item name')
-            .setDesc('Name of the food item (no | [ ] characters)')
+            .setDesc('Name of the item (no | [ ] characters)')
             .addText(text => {
                 this.nameInput = text.inputEl;
                 text.setValue(this.name)
