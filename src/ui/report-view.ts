@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, setIcon } from 'obsidian';
+import { ItemView, WorkspaceLeaf, setIcon, Notice } from 'obsidian';
 import type StokerPlugin from '../main';
 import { InventoryItem, StockStatus } from '../types';
 import { formatAmount } from './components';
@@ -49,12 +49,24 @@ export class ReportView extends ItemView {
         const titleRow = header.createDiv({ cls: 'stoker-report-title-row' });
         titleRow.createEl('h2', { text: 'Inventory Report' });
         
-        // Print button
-        const printBtn = titleRow.createEl('button', { cls: 'stoker-print-btn' });
-        const printIcon = printBtn.createSpan({ cls: 'stoker-print-btn-icon' });
-        setIcon(printIcon, 'printer');
-        printBtn.createSpan({ text: 'Print' });
-        printBtn.addEventListener('click', () => window.print());
+        // Export buttons container
+        const exportBtns = titleRow.createDiv({ cls: 'stoker-export-btns' });
+        
+        // Copy as markdown button
+        const copyMdBtn = exportBtns.createEl('button', { cls: 'stoker-export-btn' });
+        const copyMdIcon = copyMdBtn.createSpan({ cls: 'stoker-export-btn-icon' });
+        setIcon(copyMdIcon, 'copy');
+        copyMdBtn.createSpan({ text: 'Copy MD' });
+        copyMdBtn.setAttribute('aria-label', 'Copy as Markdown');
+        copyMdBtn.addEventListener('click', () => this.copyAsMarkdown());
+        
+        // Copy as plain text button
+        const copyTxtBtn = exportBtns.createEl('button', { cls: 'stoker-export-btn' });
+        const copyTxtIcon = copyTxtBtn.createSpan({ cls: 'stoker-export-btn-icon' });
+        setIcon(copyTxtIcon, 'file-text');
+        copyTxtBtn.createSpan({ text: 'Copy text' });
+        copyTxtBtn.setAttribute('aria-label', 'Copy as plain text');
+        copyTxtBtn.addEventListener('click', () => this.copyAsText());
         
         // Report type selector
         const selectorRow = header.createDiv({ cls: 'stoker-report-selector' });
@@ -442,6 +454,303 @@ export class ReportView extends ItemView {
             });
             workspace.revealLeaf(leaf);
         }
+    }
+    
+    /**
+     * Copy the current report as Markdown
+     */
+    private async copyAsMarkdown(): Promise<void> {
+        const store = this.plugin.store;
+        if (!store) {
+            new Notice('No active inventory list');
+            return;
+        }
+        
+        const activeList = this.plugin.listManager.getActiveList();
+        const listName = activeList?.name || 'Inventory';
+        const date = new Date().toLocaleDateString();
+        
+        let markdown = '';
+        
+        switch (this.currentReport) {
+            case 'shopping-list':
+                markdown = this.generateShoppingListMarkdown(store, listName, date);
+                break;
+            case 'low-stock':
+                markdown = this.generateLowStockMarkdown(store, listName, date);
+                break;
+            case 'full-inventory':
+                markdown = this.generateFullInventoryMarkdown(store, listName, date);
+                break;
+        }
+        
+        await navigator.clipboard.writeText(markdown);
+        new Notice('Copied to clipboard as Markdown');
+    }
+    
+    /**
+     * Copy the current report as plain text
+     */
+    private async copyAsText(): Promise<void> {
+        const store = this.plugin.store;
+        if (!store) {
+            new Notice('No active inventory list');
+            return;
+        }
+        
+        const activeList = this.plugin.listManager.getActiveList();
+        const listName = activeList?.name || 'Inventory';
+        const date = new Date().toLocaleDateString();
+        
+        let text = '';
+        
+        switch (this.currentReport) {
+            case 'shopping-list':
+                text = this.generateShoppingListText(store, listName, date);
+                break;
+            case 'low-stock':
+                text = this.generateLowStockText(store, listName, date);
+                break;
+            case 'full-inventory':
+                text = this.generateFullInventoryText(store, listName, date);
+                break;
+        }
+        
+        await navigator.clipboard.writeText(text);
+        new Notice('Copied to clipboard as plain text');
+    }
+    
+    /**
+     * Generate shopping list as Markdown
+     */
+    private generateShoppingListMarkdown(store: import('../data/inventory-store').InventoryStore, listName: string, date: string): string {
+        const items = store.getItems().filter(item => item.plannedRestock);
+        
+        if (items.length === 0) {
+            return `# Shopping List - ${listName}\n\n*Generated: ${date}*\n\nNo items to buy.`;
+        }
+        
+        let md = `# Shopping List - ${listName}\n\n*Generated: ${date}*\n\n`;
+        
+        // Group by category
+        const grouped = this.groupByCategory(items);
+        
+        for (const [category, categoryItems] of grouped) {
+            md += `## ${category}\n\n`;
+            for (const item of categoryItems.sort((a, b) => a.name.localeCompare(b.name))) {
+                md += `- [ ] ${item.name}`;
+                if (item.unitType !== 'boolean' && item.minimum !== undefined) {
+                    const amount = item.amount as number;
+                    const needed = Math.max(0, item.minimum - amount);
+                    if (needed > 0) {
+                        md += ` (need ${needed} ${item.unit})`;
+                    }
+                }
+                md += '\n';
+            }
+            md += '\n';
+        }
+        
+        return md.trim();
+    }
+    
+    /**
+     * Generate shopping list as plain text
+     */
+    private generateShoppingListText(store: import('../data/inventory-store').InventoryStore, listName: string, date: string): string {
+        const items = store.getItems().filter(item => item.plannedRestock);
+        
+        if (items.length === 0) {
+            return `SHOPPING LIST - ${listName}\n${date}\n\nNo items to buy.`;
+        }
+        
+        let text = `SHOPPING LIST - ${listName}\n${date}\n${'='.repeat(40)}\n\n`;
+        
+        // Group by category
+        const grouped = this.groupByCategory(items);
+        
+        for (const [category, categoryItems] of grouped) {
+            text += `${category.toUpperCase()}\n${'-'.repeat(category.length)}\n`;
+            for (const item of categoryItems.sort((a, b) => a.name.localeCompare(b.name))) {
+                text += `☐ ${item.name}`;
+                if (item.unitType !== 'boolean' && item.minimum !== undefined) {
+                    const amount = item.amount as number;
+                    const needed = Math.max(0, item.minimum - amount);
+                    if (needed > 0) {
+                        text += ` (need ${needed} ${item.unit})`;
+                    }
+                }
+                text += '\n';
+            }
+            text += '\n';
+        }
+        
+        return text.trim();
+    }
+    
+    /**
+     * Generate low stock report as Markdown
+     */
+    private generateLowStockMarkdown(store: import('../data/inventory-store').InventoryStore, listName: string, date: string): string {
+        const items = store.getItems();
+        const outItems = items.filter(item => store.getStockStatus(item) === 'out');
+        const warningItems = items.filter(item => store.getStockStatus(item) === 'warning');
+        
+        if (outItems.length === 0 && warningItems.length === 0) {
+            return `# Low Stock Report - ${listName}\n\n*Generated: ${date}*\n\n✅ All items are well stocked!`;
+        }
+        
+        let md = `# Low Stock Report - ${listName}\n\n*Generated: ${date}*\n\n`;
+        
+        if (outItems.length > 0) {
+            md += `## ❌ Out of Stock (${outItems.length})\n\n`;
+            for (const item of outItems.sort((a, b) => a.name.localeCompare(b.name))) {
+                md += `- **${item.name}**`;
+                if (item.category) md += ` [${item.category}]`;
+                md += '\n';
+            }
+            md += '\n';
+        }
+        
+        if (warningItems.length > 0) {
+            md += `## ⚠️ Running Low (${warningItems.length})\n\n`;
+            for (const item of warningItems.sort((a, b) => a.name.localeCompare(b.name))) {
+                md += `- ${item.name}: ${formatAmount(item)}`;
+                if (item.category) md += ` [${item.category}]`;
+                md += '\n';
+            }
+            md += '\n';
+        }
+        
+        return md.trim();
+    }
+    
+    /**
+     * Generate low stock report as plain text
+     */
+    private generateLowStockText(store: import('../data/inventory-store').InventoryStore, listName: string, date: string): string {
+        const items = store.getItems();
+        const outItems = items.filter(item => store.getStockStatus(item) === 'out');
+        const warningItems = items.filter(item => store.getStockStatus(item) === 'warning');
+        
+        if (outItems.length === 0 && warningItems.length === 0) {
+            return `LOW STOCK REPORT - ${listName}\n${date}\n\nAll items are well stocked!`;
+        }
+        
+        let text = `LOW STOCK REPORT - ${listName}\n${date}\n${'='.repeat(40)}\n\n`;
+        
+        if (outItems.length > 0) {
+            text += `OUT OF STOCK (${outItems.length})\n${'-'.repeat(20)}\n`;
+            for (const item of outItems.sort((a, b) => a.name.localeCompare(b.name))) {
+                text += `• ${item.name}`;
+                if (item.category) text += ` [${item.category}]`;
+                text += '\n';
+            }
+            text += '\n';
+        }
+        
+        if (warningItems.length > 0) {
+            text += `RUNNING LOW (${warningItems.length})\n${'-'.repeat(20)}\n`;
+            for (const item of warningItems.sort((a, b) => a.name.localeCompare(b.name))) {
+                text += `• ${item.name}: ${formatAmount(item)}`;
+                if (item.category) text += ` [${item.category}]`;
+                text += '\n';
+            }
+            text += '\n';
+        }
+        
+        return text.trim();
+    }
+    
+    /**
+     * Generate full inventory as Markdown
+     */
+    private generateFullInventoryMarkdown(store: import('../data/inventory-store').InventoryStore, listName: string, date: string): string {
+        const items = store.getItems();
+        
+        if (items.length === 0) {
+            return `# Full Inventory - ${listName}\n\n*Generated: ${date}*\n\nNo items in inventory.`;
+        }
+        
+        let md = `# Full Inventory - ${listName}\n\n*Generated: ${date}*\n\n`;
+        md += `**Total items:** ${items.length}\n\n`;
+        
+        // Group by category
+        const grouped = this.groupByCategory(items);
+        
+        for (const [category, categoryItems] of grouped) {
+            md += `## ${category} (${categoryItems.length})\n\n`;
+            md += '| Item | Amount | Status |\n';
+            md += '|------|--------|--------|\n';
+            
+            for (const item of categoryItems.sort((a, b) => a.name.localeCompare(b.name))) {
+                const status = store.getStockStatus(item);
+                const statusIcon = status === 'out' ? '❌' : status === 'warning' ? '⚠️' : '✅';
+                md += `| ${item.name} | ${formatAmount(item)} | ${statusIcon} |\n`;
+            }
+            md += '\n';
+        }
+        
+        return md.trim();
+    }
+    
+    /**
+     * Generate full inventory as plain text
+     */
+    private generateFullInventoryText(store: import('../data/inventory-store').InventoryStore, listName: string, date: string): string {
+        const items = store.getItems();
+        
+        if (items.length === 0) {
+            return `FULL INVENTORY - ${listName}\n${date}\n\nNo items in inventory.`;
+        }
+        
+        let text = `FULL INVENTORY - ${listName}\n${date}\n${'='.repeat(40)}\n\n`;
+        text += `Total items: ${items.length}\n\n`;
+        
+        // Group by category
+        const grouped = this.groupByCategory(items);
+        
+        for (const [category, categoryItems] of grouped) {
+            text += `${category.toUpperCase()} (${categoryItems.length})\n${'-'.repeat(category.length + 5)}\n`;
+            
+            for (const item of categoryItems.sort((a, b) => a.name.localeCompare(b.name))) {
+                const status = store.getStockStatus(item);
+                const statusMark = status === 'out' ? '[X]' : status === 'warning' ? '[!]' : '[ ]';
+                text += `${statusMark} ${item.name}: ${formatAmount(item)}\n`;
+            }
+            text += '\n';
+        }
+        
+        return text.trim();
+    }
+    
+    /**
+     * Group items by category
+     */
+    private groupByCategory(items: InventoryItem[]): Map<string, InventoryItem[]> {
+        const grouped = new Map<string, InventoryItem[]>();
+        
+        for (const item of items) {
+            const cat = item.category || 'Uncategorized';
+            if (!grouped.has(cat)) {
+                grouped.set(cat, []);
+            }
+            grouped.get(cat)!.push(item);
+        }
+        
+        // Sort categories (Uncategorized last)
+        const sorted = new Map<string, InventoryItem[]>();
+        const keys = Array.from(grouped.keys()).sort((a, b) => {
+            if (a === 'Uncategorized') return 1;
+            if (b === 'Uncategorized') return -1;
+            return a.localeCompare(b);
+        });
+        
+        for (const key of keys) {
+            sorted.set(key, grouped.get(key)!);
+        }
+        
+        return sorted;
     }
 }
 

@@ -864,33 +864,42 @@
     font-size: 1.5em;
 }
 
-/* Print button */
-.stoker-print-btn {
+/* Export buttons container */
+.stoker-export-btns {
     display: flex;
-    align-items: center;
     gap: 8px;
-    padding: 10px 16px;
-    background: var(--interactive-accent);
-    border: none;
+    flex-wrap: wrap;
+}
+
+/* Export button (copy) */
+.stoker-export-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: var(--background-modifier-form-field);
+    border: 1px solid var(--background-modifier-border);
     border-radius: var(--stoker-item-radius);
-    color: var(--text-on-accent);
-    font-size: var(--font-ui-small);
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
     cursor: pointer;
-    transition: background 150ms ease;
+    transition: all 150ms ease;
 }
 
-.stoker-print-btn:hover {
-    background: var(--interactive-accent-hover);
+.stoker-export-btn:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+    border-color: var(--background-modifier-border-hover);
 }
 
-.stoker-print-btn-icon {
+.stoker-export-btn-icon {
     display: flex;
     align-items: center;
 }
 
-.stoker-print-btn-icon svg {
-    width: 16px;
-    height: 16px;
+.stoker-export-btn-icon svg {
+    width: 14px;
+    height: 14px;
 }
 
 /* Report type selector */
@@ -1100,64 +1109,6 @@
 .stoker-report-empty-text {
     font-size: var(--font-ui-medium);
     color: var(--text-muted);
-}
-
-/* ===== Print Styles ===== */
-@media print {
-    /* Hide Obsidian UI */
-    .workspace-tab-header-container,
-    .workspace-ribbon,
-    .workspace-leaf-resize-handle,
-    .status-bar,
-    .titlebar,
-    .sidebar-toggle-button,
-    .view-header {
-        display: none !important;
-    }
-    
-    /* Hide report controls when printing */
-    .stoker-report-header .stoker-print-btn,
-    .stoker-report-selector {
-        display: none !important;
-    }
-    
-    /* Full width for content */
-    .stoker-report-view {
-        padding: 0;
-        overflow: visible;
-    }
-    
-    .stoker-report-content {
-        overflow: visible;
-    }
-    
-    /* Better print colors */
-    .stoker-report-stat--success,
-    .stoker-report-stat--warning,
-    .stoker-report-stat--danger {
-        border: 1px solid currentColor;
-    }
-    
-    .stoker-report-item:nth-child(odd) {
-        background: #f5f5f5 !important;
-    }
-    
-    .stoker-report-item--warning {
-        background: #fff3cd !important;
-    }
-    
-    .stoker-report-item--out {
-        background: #f8d7da !important;
-    }
-    
-    /* Page breaks */
-    .stoker-report-subsection-title {
-        page-break-after: avoid;
-    }
-    
-    .stoker-report-list {
-        page-break-inside: avoid;
-    }
 }
 
 /* ===== Sidebar List Selector ===== */
