@@ -94,7 +94,7 @@ lastUpdated: 2025-01-29
 
 ## Support
 
-- Report issues on [GitHub](https://github.com/garf/stoker)
+- Report issues on [GitHub](https://github.com/garf/stoker-obsidian)
 - For questions, use GitHub Discussions
 
 ## License
