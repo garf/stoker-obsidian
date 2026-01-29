@@ -412,16 +412,17 @@
     color: var(--text-muted);
 }
 
+.stoker-item--normal .stoker-item-status,
+.stoker-item--in-stock .stoker-item-status {
+    color: var(--stoker-success-color);
+}
+
 .stoker-item--warning .stoker-item-status {
     color: var(--color-yellow);
 }
 
 .stoker-item--out .stoker-item-status {
     color: var(--color-red);
-}
-
-.stoker-item--in-stock .stoker-item-status {
-    color: var(--stoker-success-color);
 }
 
 .stoker-item-status svg {

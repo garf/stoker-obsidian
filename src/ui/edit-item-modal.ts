@@ -12,7 +12,7 @@ export class EditItemModal extends Modal {
     private unitType: UnitType;
     private amount: number | boolean;
     private unit: string;
-    private minimum: number | undefined;
+    private minimum: number;
     private plannedRestock: boolean;
     
     private nameInput: HTMLInputElement;
@@ -30,7 +30,7 @@ export class EditItemModal extends Modal {
         this.unitType = item.unitType;
         this.amount = item.amount;
         this.unit = item.unit;
-        this.minimum = item.minimum;
+        this.minimum = item.minimum ?? 0;
         this.plannedRestock = item.plannedRestock ?? false;
     }
 
@@ -155,15 +155,15 @@ export class EditItemModal extends Modal {
         // Minimum threshold
         minimumSetting = new Setting(contentEl)
             .setName('Minimum threshold')
-            .setDesc('Show warning when below this amount (optional)')
+            .setDesc('Show warning when below this amount (0 = no warning)')
             .addText(text => {
                 text.inputEl.type = 'number';
                 text.inputEl.min = '0';
                 text.inputEl.step = 'any';
-                text.setValue(this.minimum !== undefined ? String(this.minimum) : '');
-                text.setPlaceholder('Optional');
+                text.setValue(this.minimum > 0 ? String(this.minimum) : '');
+                text.setPlaceholder('0');
                 text.onChange(value => {
-                    this.minimum = value ? parseFloat(value) : undefined;
+                    this.minimum = value ? parseFloat(value) : 0;
                 });
             });
         
@@ -255,7 +255,7 @@ export class EditItemModal extends Modal {
             if (typeof this.amount === 'number') {
                 this.amount = this.amount > 0;
             }
-            this.minimum = undefined;
+            this.minimum = 0;
         }
     }
 

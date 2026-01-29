@@ -42,7 +42,7 @@ function formatAmount(item: InventoryItem): string {
         text = formatNumber(amount);
     }
     
-    if (item.minimum !== undefined) {
+    if (item.minimum !== undefined && item.minimum > 0) {
         if (item.unit) {
             text += ` (min: ${formatNumber(item.minimum)} ${item.unit})`;
         } else {

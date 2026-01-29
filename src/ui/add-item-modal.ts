@@ -11,7 +11,7 @@ export class AddItemModal extends Modal {
     private unitType: UnitType = 'count';
     private amount: number | boolean = 1;
     private unit = 'pcs';
-    private minimum: number | undefined;
+    private minimum = 0;
     
     private nameInput: HTMLInputElement;
     private nameError: HTMLElement;
@@ -120,14 +120,14 @@ export class AddItemModal extends Modal {
         // Minimum threshold
         minimumSetting = new Setting(contentEl)
             .setName('Minimum threshold')
-            .setDesc('Show warning when below this amount (optional)')
+            .setDesc('Show warning when below this amount (0 = no warning)')
             .addText(text => {
                 text.inputEl.type = 'number';
                 text.inputEl.min = '0';
                 text.inputEl.step = 'any';
-                text.setPlaceholder('Optional');
+                text.setPlaceholder('0');
                 text.onChange(value => {
-                    this.minimum = value ? parseFloat(value) : undefined;
+                    this.minimum = value ? parseFloat(value) : 0;
                 });
             });
         
@@ -176,7 +176,7 @@ export class AddItemModal extends Modal {
         // Set default for boolean
         if (isBoolean) {
             this.amount = true;
-            this.minimum = undefined;
+            this.minimum = 0;
         }
     }
 

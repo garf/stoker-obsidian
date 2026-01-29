@@ -276,7 +276,7 @@ export class InventoryStore extends Events {
             line += ` | ${item.amount} ${item.unit}`;
         }
         
-        if (item.minimum !== undefined && item.unitType !== 'boolean') {
+        if (item.minimum !== undefined && item.minimum > 0 && item.unitType !== 'boolean') {
             line += ` | min: ${item.minimum}`;
         }
         

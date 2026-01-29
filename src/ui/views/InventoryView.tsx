@@ -53,7 +53,7 @@ function formatAmount(item: InventoryItem): string {
         text = formatNumber(amount);
     }
     
-    if (item.minimum !== undefined) {
+    if (item.minimum !== undefined && item.minimum > 0) {
         if (item.unit) {
             text += ` (minimum: ${formatNumber(item.minimum)} ${item.unit})`;
         } else {
@@ -124,12 +124,8 @@ interface ItemRowProps {
 function ItemRow({ item, status, onEdit, onIncrease, onDecrease, onToggleStock, onToggleRestock }: ItemRowProps) {
     const progressData = getProgressBarData(item, status);
     
-    const statusIcon = item.plannedRestock 
-        ? 'shopping-cart' 
-        : status === 'warning' ? 'alert-triangle'
-        : status === 'out' ? 'x-circle'
-        : status === 'in-stock' ? 'check-circle'
-        : 'package';
+    // Use package icon for all items, color is controlled by CSS based on status
+    const statusIcon = item.plannedRestock ? 'shopping-cart' : 'package';
     
     const handleRowClick = () => onEdit();
     
