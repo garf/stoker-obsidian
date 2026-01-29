@@ -73,37 +73,40 @@ export class ListManager {
      * Sync discovered inventory files with the settings
      * This finds all files with stoker: inventory frontmatter
      * and adds them to the lists if not already present.
-     * Also removes lists whose files no longer exist.
+     * @param removeOrphanedLists If true, removes lists whose files no longer exist (only do this after vault is fully loaded)
      */
-    async syncDiscoveredFiles(): Promise<void> {
+    async syncDiscoveredFiles(removeOrphanedLists = false): Promise<void> {
         const discovered = discoverInventoryFiles(this.app);
         let hasChanges = false;
 
-        // First, remove lists whose files no longer exist
-        const listsToRemove: string[] = [];
-        for (const list of this.settings.lists) {
-            if (!this.fileExists(list.filePath)) {
-                listsToRemove.push(list.id);
-                console.debug(`Stoker: Removing list for missing file: ${list.filePath}`);
-            }
-        }
-
-        if (listsToRemove.length > 0) {
-            this.settings.lists = this.settings.lists.filter(
-                list => !listsToRemove.includes(list.id)
-            );
-            
-            // Clear cached stores for removed lists
-            for (const id of listsToRemove) {
-                this.stores.delete(id);
+        // Only remove lists whose files no longer exist if explicitly requested
+        // (This should only be done after the vault is fully loaded to avoid false positives)
+        if (removeOrphanedLists) {
+            const listsToRemove: string[] = [];
+            for (const list of this.settings.lists) {
+                if (!this.fileExists(list.filePath)) {
+                    listsToRemove.push(list.id);
+                    console.debug(`Stoker: Removing list for missing file: ${list.filePath}`);
+                }
             }
 
-            // If active list was removed, clear it
-            if (this.settings.activeListId && listsToRemove.includes(this.settings.activeListId)) {
-                this.settings.activeListId = null;
-            }
+            if (listsToRemove.length > 0) {
+                this.settings.lists = this.settings.lists.filter(
+                    list => !listsToRemove.includes(list.id)
+                );
+                
+                // Clear cached stores for removed lists
+                for (const id of listsToRemove) {
+                    this.stores.delete(id);
+                }
 
-            hasChanges = true;
+                // If active list was removed, clear it
+                if (this.settings.activeListId && listsToRemove.includes(this.settings.activeListId)) {
+                    this.settings.activeListId = null;
+                }
+
+                hasChanges = true;
+            }
         }
 
         // Add newly discovered files

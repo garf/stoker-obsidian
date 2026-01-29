@@ -1,6 +1,6 @@
 {
 	"name": "stoker",
-	"version": "2.1.0",
+	"version": "2.1.1",
 	"description": "Inventory tracker for Obsidian - track stock levels and get low-stock warnings",
 	"main": "main.js",
 	"type": "module",

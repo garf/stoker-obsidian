@@ -47,7 +47,19 @@ export default class StokerPlugin extends Plugin {
             this.settings,
             () => this.saveSettings()
         );
+        
+        // Initialize list manager - but file discovery needs metadata cache to be ready
+        // Do initial init for existing lists in settings (don't remove orphaned lists yet)
         await this.listManager.initialize();
+        
+        // Re-discover files after layout is ready (metadata cache should be populated by then)
+        // Only now is it safe to remove orphaned lists since vault is fully loaded
+        this.app.workspace.onLayoutReady(() => {
+            void this.listManager.syncDiscoveredFiles(true).then(() => {
+                // Update cached store reference after re-discovery
+                this._activeStore = this.listManager.getActiveStoreSync();
+            });
+        });
         
         // Update cached store reference
         this._activeStore = this.listManager.getActiveStoreSync();
