@@ -129,7 +129,7 @@ function ItemRow({ item, status, onEdit, onIncrease, onDecrease, onToggleStock, 
                     <div className="stoker-item-progress">
                         <div 
                             className={`stoker-item-progress-bar stoker-item-progress-bar--${progressData.color}`}
-                            style={{ width: `${progressData.percent}%` }}
+                            style={{ '--progress-width': `${progressData.percent}%` } as React.CSSProperties}
                         />
                     </div>
                 )}
@@ -299,7 +299,7 @@ function EmptyState({
                 </button>
             )}
             {onSecondaryButtonClick && secondaryButtonText && (
-                <button className="stoker-btn" onClick={onSecondaryButtonClick} style={{ marginTop: '8px' }}>
+                <button className="stoker-btn stoker-secondary-btn" onClick={onSecondaryButtonClick}>
                     {secondaryButtonIcon && <span className="stoker-btn-icon"><Icon name={secondaryButtonIcon} /></span>}
                     <span>{secondaryButtonText}</span>
                 </button>

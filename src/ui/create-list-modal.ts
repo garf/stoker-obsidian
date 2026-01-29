@@ -51,7 +51,7 @@ export class CreateListModal extends Modal {
         // File path input
         const filePathSetting = new Setting(contentEl)
             .setName('File path')
-            // eslint-disable-next-line obsidianmd/ui/sentence-case
+            // eslint-disable-next-line obsidianmd/ui/sentence-case -- ".md" is a file extension
             .setDesc('Path to the markdown file (must end with .md)')
             .addText(text => {
                 this.filePathInput = text;
@@ -185,7 +185,7 @@ export class CreateListModal extends Modal {
                 cls: 'stoker-modal-info'
             });
             contentEl.createEl('p', { 
-                // eslint-disable-next-line obsidianmd/ui/sentence-case
+                // eslint-disable-next-line obsidianmd/ui/sentence-case -- "Stoker" is a product name
                 text: 'If this is already a Stoker inventory file, it will be added to your lists. Otherwise, it will be overwritten.',
                 cls: 'stoker-modal-warning'
             });

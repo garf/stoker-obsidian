@@ -52,7 +52,7 @@ export class StokerSettingTab extends PluginSettingTab {
             text: 'Stoker helps you track your inventory. Add items, set minimum thresholds, and get warnings when running low.' 
         });
         aboutDiv.createEl('p', { 
-            // eslint-disable-next-line obsidianmd/ui/sentence-case
+            // eslint-disable-next-line obsidianmd/ui/sentence-case -- "Obsidian Sync" is a product name
             text: 'Create multiple inventory lists stored in separate markdown files that sync with Obsidian Sync.' 
         });
     }

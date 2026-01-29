@@ -455,6 +455,7 @@
 .stoker-item-progress-bar {
     height: 100%;
     border-radius: 2px;
+    width: var(--progress-width, 0%);
     transition: width 200ms ease, background-color 200ms ease;
 }
 
@@ -1500,6 +1501,10 @@
     margin: 0 0 16px;
     font-size: var(--font-ui-small);
     color: var(--text-muted);
+}
+
+.stoker-secondary-btn {
+    margin-top: var(--stoker-spacing-sm);
 }
 
 /* List manager specific empty state */

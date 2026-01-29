@@ -126,7 +126,7 @@ export class EditItemModal extends Modal {
             .addText(text => {
                 unitInput = text;
                 this.unitInputEl = text.inputEl;
-                // eslint-disable-next-line obsidianmd/ui/sentence-case
+                // eslint-disable-next-line obsidianmd/ui/sentence-case -- unit abbreviation
                 text.setPlaceholder('pcs');
                 text.setValue(this.unit);
                 text.onChange(value => {
@@ -225,7 +225,7 @@ export class EditItemModal extends Modal {
                     // Don't force a unit for portion type
                     break;
                 case 'weight':
-                    // eslint-disable-next-line obsidianmd/ui/sentence-case
+                    // eslint-disable-next-line obsidianmd/ui/sentence-case -- unit abbreviation
                     unitInput.setPlaceholder('kg');
                     if (!this.unit || this.unit === 'pcs' || this.unit === 'L') {
                         this.unit = 'kg';
@@ -240,7 +240,7 @@ export class EditItemModal extends Modal {
                     }
                     break;
                 default:
-                    // eslint-disable-next-line obsidianmd/ui/sentence-case
+                    // eslint-disable-next-line obsidianmd/ui/sentence-case -- unit abbreviation
                     unitInput.setPlaceholder('pcs');
                     if (!this.unit || this.unit === 'kg' || this.unit === 'L') {
                         this.unit = 'pcs';

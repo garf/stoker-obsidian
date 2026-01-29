@@ -99,3 +99,14 @@ Status characters: `[ ]` = normal, `[!]` = warning, `[-]` = out, `[x]` = in-stoc
 - **Thin view shells**: Obsidian `ItemView` classes only handle mounting/unmounting React roots
 - **Async handling**: Use `void` operator for fire-and-forget promises in event handlers
 - **Class toggling**: Use `element.toggleClass()` instead of `style.display` for visibility
+- **CSS custom properties**: Use `--progress-width` for dynamic progress bar widths instead of inline styles
+
+## Obsidian Plugin Guidelines
+
+The codebase follows Obsidian's plugin review guidelines:
+
+- **Sentence case**: UI text uses sentence case. Use `eslint-disable` with reason comments for product names ("Stoker", "Obsidian Sync") and unit abbreviations ("pcs", "kg", "L")
+- **No leaf.detach()**: Use `workspace.detachLeavesOfType()` instead of directly detaching leaves
+- **Async methods**: View shell `onOpen`/`onClose` must be async (required by `ItemView` interface) even without await
+- **Promise handling**: All promises are properly handled with `await`, `.catch()`, `.then()`, or `void` operator
+- **CSS styling**: Avoid inline `style.display`; use CSS classes and custom properties for theming compatibility

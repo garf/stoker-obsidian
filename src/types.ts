@@ -80,18 +80,6 @@ export const DEFAULT_SETTINGS: StokerSettings = {
 };
 
 /**
- * Parsed inventory data structure
- */
-export interface InventoryData {
-    /** Version of the data format */
-    version: number;
-    /** Last update timestamp */
-    lastUpdated: string;
-    /** All inventory items */
-    items: InventoryItem[];
-}
-
-/**
  * Event types for inventory changes
  */
 export type InventoryEventType = 'item-added' | 'item-updated' | 'item-deleted' | 'data-loaded';

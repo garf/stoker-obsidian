@@ -51,7 +51,7 @@ export class ListManager {
 
         // Load the active list if any
         if (this.settings.activeListId) {
-            const store = await this.getStore(this.settings.activeListId);
+            const store = this.getStore(this.settings.activeListId);
             if (store) {
                 await store.load();
             }
@@ -205,7 +205,7 @@ export class ListManager {
     /**
      * Get the store for a specific list (lazy-loads if needed)
      */
-    async getStore(listId: string): Promise<InventoryStore | null> {
+    getStore(listId: string): InventoryStore | null {
         const list = this.getList(listId);
         if (!list) return null;
 
@@ -295,7 +295,7 @@ export class ListManager {
             
             // Load the new active store if any
             if (this.settings.activeListId) {
-                const store = await this.getStore(this.settings.activeListId);
+                const store = this.getStore(this.settings.activeListId);
                 if (store) {
                     await store.load();
                 }
@@ -321,7 +321,7 @@ export class ListManager {
         await this.saveSettings();
 
         // Load the store (will handle missing files gracefully)
-        const store = await this.getStore(id);
+        const store = this.getStore(id);
         if (store) {
             await store.load();
         }
@@ -438,7 +438,7 @@ export class ListManager {
             
             // Load the new active store if any
             if (this.settings.activeListId) {
-                const store = await this.getStore(this.settings.activeListId);
+                const store = this.getStore(this.settings.activeListId);
                 if (store) {
                     await store.load();
                 }

@@ -61,9 +61,9 @@ export function registerCommands(plugin: StokerPlugin): void {
             const { workspace } = plugin.app;
             const existing = workspace.getLeavesOfType(SIDEBAR_VIEW_TYPE);
             
-            if (existing.length > 0 && existing[0]) {
-                // Close existing sidebar
-                existing[0].detach();
+            if (existing.length > 0) {
+                // Close existing sidebar using the proper Obsidian API
+                workspace.detachLeavesOfType(SIDEBAR_VIEW_TYPE);
             } else {
                 // Open sidebar
                 const leaf = workspace.getLeftLeaf(false);
@@ -208,7 +208,7 @@ export function registerCommands(plugin: StokerPlugin): void {
  * Register the ribbon icon
  */
 export function registerRibbonIcon(plugin: StokerPlugin): void {
-    // eslint-disable-next-line obsidianmd/ui/sentence-case
+    // eslint-disable-next-line obsidianmd/ui/sentence-case -- "Stoker" is a product name
     plugin.addRibbonIcon('package', 'Open Stoker', async () => {
         const { workspace } = plugin.app;
         
