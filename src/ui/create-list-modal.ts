@@ -33,7 +33,7 @@ export class CreateListModal extends Modal {
             .setDesc('A friendly name for this inventory list')
             .addText(text => {
                 this.nameInput = text;
-                text.setPlaceholder('e.g., Home, Office, Vacation house')
+                text.setPlaceholder('Home, office, vacation house')
                     .onChange(value => {
                         this.name = value;
                         this.clearError(this.nameInput, this.nameError);
@@ -51,10 +51,11 @@ export class CreateListModal extends Modal {
         // File path input
         const filePathSetting = new Setting(contentEl)
             .setName('File path')
+            // eslint-disable-next-line obsidianmd/ui/sentence-case
             .setDesc('Path to the markdown file (must end with .md)')
             .addText(text => {
                 this.filePathInput = text;
-                text.setPlaceholder('e.g., stoker-lists/home.md')
+                text.setPlaceholder('stoker-lists/home.md')
                     .onChange(value => {
                         this.filePath = value;
                         this.clearError(this.filePathInput, this.filePathError);
@@ -78,7 +79,7 @@ export class CreateListModal extends Modal {
             text: 'Create list',
             cls: 'mod-cta'
         });
-        createBtn.addEventListener('click', () => this.createList());
+        createBtn.addEventListener('click', () => { void this.createList(); });
     }
 
     private suggestFilePath(name: string): string {
@@ -184,7 +185,8 @@ export class CreateListModal extends Modal {
                 cls: 'stoker-modal-info'
             });
             contentEl.createEl('p', { 
-                text: 'Note: If this is already a Stoker inventory file, it will be added to your lists. Otherwise, it will be overwritten.',
+                // eslint-disable-next-line obsidianmd/ui/sentence-case
+                text: 'If this is already a Stoker inventory file, it will be added to your lists. Otherwise, it will be overwritten.',
                 cls: 'stoker-modal-warning'
             });
             

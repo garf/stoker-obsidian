@@ -22,7 +22,7 @@ export function registerCommands(plugin: StokerPlugin): void {
             // Check if view already exists
             const existing = workspace.getLeavesOfType(INVENTORY_VIEW_TYPE);
             if (existing.length > 0 && existing[0]) {
-                workspace.revealLeaf(existing[0]);
+                void workspace.revealLeaf(existing[0]);
                 return;
             }
             
@@ -33,7 +33,7 @@ export function registerCommands(plugin: StokerPlugin): void {
                     type: INVENTORY_VIEW_TYPE,
                     active: true,
                 });
-                workspace.revealLeaf(leaf);
+                void workspace.revealLeaf(leaf);
             }
         },
     });
@@ -72,7 +72,7 @@ export function registerCommands(plugin: StokerPlugin): void {
                         type: SIDEBAR_VIEW_TYPE,
                         active: true,
                     });
-                    workspace.revealLeaf(leaf);
+                    void workspace.revealLeaf(leaf);
                 }
             }
         },
@@ -107,7 +107,7 @@ export function registerCommands(plugin: StokerPlugin): void {
             const existing = workspace.getLeavesOfType(INVENTORY_VIEW_TYPE);
             
             if (existing.length > 0 && existing[0]) {
-                workspace.revealLeaf(existing[0]);
+                void workspace.revealLeaf(existing[0]);
             } else {
                 const leaf = workspace.getLeaf('tab');
                 if (leaf) {
@@ -115,7 +115,7 @@ export function registerCommands(plugin: StokerPlugin): void {
                         type: INVENTORY_VIEW_TYPE,
                         active: true,
                     });
-                    workspace.revealLeaf(leaf);
+                    void workspace.revealLeaf(leaf);
                 }
             }
         },
@@ -131,7 +131,7 @@ export function registerCommands(plugin: StokerPlugin): void {
             // Check if view already exists
             const existing = workspace.getLeavesOfType(REPORT_VIEW_TYPE);
             if (existing.length > 0 && existing[0]) {
-                workspace.revealLeaf(existing[0]);
+                void workspace.revealLeaf(existing[0]);
                 return;
             }
             
@@ -142,7 +142,7 @@ export function registerCommands(plugin: StokerPlugin): void {
                     type: REPORT_VIEW_TYPE,
                     active: true,
                 });
-                workspace.revealLeaf(leaf);
+                void workspace.revealLeaf(leaf);
             }
         },
     });
@@ -157,7 +157,7 @@ export function registerCommands(plugin: StokerPlugin): void {
             // Check if view already exists
             const existing = workspace.getLeavesOfType(LIST_MANAGER_VIEW_TYPE);
             if (existing.length > 0 && existing[0]) {
-                workspace.revealLeaf(existing[0]);
+                void workspace.revealLeaf(existing[0]);
                 return;
             }
             
@@ -168,7 +168,7 @@ export function registerCommands(plugin: StokerPlugin): void {
                     type: LIST_MANAGER_VIEW_TYPE,
                     active: true,
                 });
-                workspace.revealLeaf(leaf);
+                void workspace.revealLeaf(leaf);
             }
         },
     });
@@ -208,13 +208,14 @@ export function registerCommands(plugin: StokerPlugin): void {
  * Register the ribbon icon
  */
 export function registerRibbonIcon(plugin: StokerPlugin): void {
-    plugin.addRibbonIcon('package', 'Open Stoker inventory', async () => {
+    // eslint-disable-next-line obsidianmd/ui/sentence-case
+    plugin.addRibbonIcon('package', 'Open Stoker', async () => {
         const { workspace } = plugin.app;
         
         // Check if view already exists
         const existing = workspace.getLeavesOfType(INVENTORY_VIEW_TYPE);
         if (existing.length > 0 && existing[0]) {
-            workspace.revealLeaf(existing[0]);
+            void workspace.revealLeaf(existing[0]);
             return;
         }
         
@@ -225,7 +226,7 @@ export function registerRibbonIcon(plugin: StokerPlugin): void {
                 type: INVENTORY_VIEW_TYPE,
                 active: true,
             });
-            workspace.revealLeaf(leaf);
+            void workspace.revealLeaf(leaf);
         }
     });
 }
@@ -252,8 +253,9 @@ class ListSwitcherModal extends FuzzySuggestModal<InventoryList> {
         return isActive ? `${list.name} (active)` : list.name;
     }
 
-    async onChooseItem(list: InventoryList): Promise<void> {
-        await this.plugin.listManager.switchList(list.id);
-        new Notice(`Switched to: ${list.name}`);
+    onChooseItem(list: InventoryList): void {
+        void this.plugin.listManager.switchList(list.id).then(() => {
+            new Notice(`Switched to: ${list.name}`);
+        });
     }
 }

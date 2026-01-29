@@ -33,7 +33,7 @@ export function isStokerFile(metadata: CachedMetadata | null): boolean {
  */
 export function getStokerFileType(metadata: CachedMetadata | null): StokerFileType | null {
     if (!metadata?.frontmatter) return null;
-    const type = metadata.frontmatter[STOKER_FRONTMATTER_KEY];
+    const type = metadata.frontmatter[STOKER_FRONTMATTER_KEY] as unknown;
     if (type === 'inventory') return 'inventory';
     return null;
 }
@@ -54,8 +54,8 @@ export function discoverStokerFiles(app: App): DiscoveredFile[] {
                 discovered.push({
                     file,
                     type,
-                    version: metadata?.frontmatter?.version,
-                    lastUpdated: metadata?.frontmatter?.lastUpdated,
+                    version: metadata?.frontmatter?.version as number | undefined,
+                    lastUpdated: metadata?.frontmatter?.lastUpdated as string | undefined,
                 });
             }
         }
@@ -110,8 +110,8 @@ export function watchForStokerFiles(
             onFileDiscovered({
                 file,
                 type,
-                version: metadata?.frontmatter?.version,
-                lastUpdated: metadata?.frontmatter?.lastUpdated,
+                version: metadata?.frontmatter?.version as number | undefined,
+                lastUpdated: metadata?.frontmatter?.lastUpdated as string | undefined,
             });
         } else if (!isStoker && wasStokerFile) {
             // File is no longer a stoker file

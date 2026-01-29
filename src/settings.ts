@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting, setIcon } from 'obsidian';
+import { App, PluginSettingTab, Setting } from 'obsidian';
 import type StokerPlugin from './main';
 import { StokerSettings, DEFAULT_SETTINGS } from './types';
 import { LIST_MANAGER_VIEW_TYPE } from './ui/list-manager-view';
@@ -25,13 +25,13 @@ export class StokerSettingTab extends PluginSettingTab {
         const lists = this.plugin.listManager.getLists();
         const activeList = this.plugin.listManager.getActiveList();
         
-        const listsSummary = new Setting(containerEl)
+        new Setting(containerEl)
             .setName('Manage lists')
             .setDesc(`You have ${lists.length} inventory list${lists.length !== 1 ? 's' : ''}.${activeList ? ` Active: ${activeList.name}` : ''}`)
             .addButton(button => button
                 .setButtonText('Open list manager')
                 .setCta()
-                .onClick(() => this.openListManager()));
+                .onClick(() => { void this.openListManager(); }));
         
         // Show sidebar on startup
         new Setting(containerEl)
@@ -52,7 +52,8 @@ export class StokerSettingTab extends PluginSettingTab {
             text: 'Stoker helps you track your inventory. Add items, set minimum thresholds, and get warnings when running low.' 
         });
         aboutDiv.createEl('p', { 
-            text: 'You can create multiple inventory lists (e.g., home supplies, office equipment, workshop tools), each stored in a separate markdown file that syncs with Obsidian Sync.' 
+            // eslint-disable-next-line obsidianmd/ui/sentence-case
+            text: 'Create multiple inventory lists stored in separate markdown files that sync with Obsidian Sync.' 
         });
     }
 
@@ -62,7 +63,7 @@ export class StokerSettingTab extends PluginSettingTab {
         // Check if view already exists
         const existing = workspace.getLeavesOfType(LIST_MANAGER_VIEW_TYPE);
         if (existing.length > 0 && existing[0]) {
-            workspace.revealLeaf(existing[0]);
+            void workspace.revealLeaf(existing[0]);
             return;
         }
         
@@ -73,7 +74,7 @@ export class StokerSettingTab extends PluginSettingTab {
                 type: LIST_MANAGER_VIEW_TYPE,
                 active: true,
             });
-            workspace.revealLeaf(leaf);
+            void workspace.revealLeaf(leaf);
         }
     }
 }

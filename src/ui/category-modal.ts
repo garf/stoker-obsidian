@@ -126,7 +126,7 @@ export class CategoryManageModal extends Modal {
             text: 'Rename',
             cls: 'mod-cta'
         });
-        saveBtn.addEventListener('click', async () => {
+        saveBtn.addEventListener('click', () => {
             const error = validateCategoryName(newName);
             if (error) {
                 showInputError(nameInput, errorEl, error);
@@ -135,9 +135,10 @@ export class CategoryManageModal extends Modal {
             
             const sanitized = sanitizeInput(newName);
             if (sanitized && sanitized !== oldName) {
-                await this.renameCategory(oldName, sanitized);
+                void this.renameCategory(oldName, sanitized).then(() => this.render());
+            } else {
+                this.render();
             }
-            this.render();
         });
     }
 
@@ -167,9 +168,8 @@ export class CategoryManageModal extends Modal {
             text: 'Delete',
             cls: 'mod-warning'
         });
-        deleteBtn.addEventListener('click', async () => {
-            await this.deleteCategory(category);
-            this.render();
+        deleteBtn.addEventListener('click', () => {
+            void this.deleteCategory(category).then(() => this.render());
         });
     }
 

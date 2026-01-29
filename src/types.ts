@@ -104,7 +104,7 @@ export type InventoryEventCallback = (type: InventoryEventType, item?: Inventory
 /**
  * Event types for list management changes
  */
-export type ListEventType = 'list-created' | 'list-deleted' | 'list-switched';
+export type ListEventType = 'list-created' | 'list-deleted' | 'list-switched' | 'list-updated';
 
 /**
  * Callback for list change events

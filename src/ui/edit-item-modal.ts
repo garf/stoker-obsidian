@@ -43,7 +43,7 @@ export class EditItemModal extends Modal {
         // Name input
         const nameSetting = new Setting(contentEl)
             .setName('Item name')
-            .setDesc('Name of the item (no | [ ] characters)')
+            .setDesc('Name of the item')
             .addText(text => {
                 this.nameInput = text.inputEl;
                 text.setValue(this.name)
@@ -71,7 +71,7 @@ export class EditItemModal extends Modal {
                 for (const cat of categories) {
                     dropdown.addOption(cat, cat);
                 }
-                dropdown.addOption('__new__', '+ New category...');
+                dropdown.addOption('__new__', '+ new category');
                 dropdown.setValue(this.category);
                 dropdown.onChange(value => {
                     if (value === '__new__') {
@@ -93,11 +93,11 @@ export class EditItemModal extends Modal {
             .setName('Unit type')
             .setDesc('How to track this item')
             .addDropdown(dropdown => {
-                dropdown.addOption('count', 'Count (whole pieces)');
-                dropdown.addOption('portion', 'Portion (fractions like 0.5, 0.25)');
-                dropdown.addOption('weight', 'Weight (kg, g, lb)');
-                dropdown.addOption('volume', 'Volume (L, ml)');
-                dropdown.addOption('boolean', 'In stock / Out of stock');
+                dropdown.addOption('count', 'Count');
+                dropdown.addOption('portion', 'Portion');
+                dropdown.addOption('weight', 'Weight');
+                dropdown.addOption('volume', 'Volume');
+                dropdown.addOption('boolean', 'In stock / out of stock');
                 dropdown.setValue(this.unitType);
                 dropdown.onChange(value => {
                     this.unitType = value as UnitType;
@@ -126,6 +126,7 @@ export class EditItemModal extends Modal {
             .addText(text => {
                 unitInput = text;
                 this.unitInputEl = text.inputEl;
+                // eslint-disable-next-line obsidianmd/ui/sentence-case
                 text.setPlaceholder('pcs');
                 text.setValue(this.unit);
                 text.onChange(value => {
@@ -155,13 +156,13 @@ export class EditItemModal extends Modal {
         // Minimum threshold
         minimumSetting = new Setting(contentEl)
             .setName('Minimum threshold')
-            .setDesc('Show warning when below this amount (optional, e.g., 0.25, 0.5)')
+            .setDesc('Show warning when below this amount (optional)')
             .addText(text => {
                 text.inputEl.type = 'number';
                 text.inputEl.min = '0';
                 text.inputEl.step = 'any';
                 text.setValue(this.minimum !== undefined ? String(this.minimum) : '');
-                text.setPlaceholder('e.g., 0.25, 0.5, 2');
+                text.setPlaceholder('Optional');
                 text.onChange(value => {
                     this.minimum = value ? parseFloat(value) : undefined;
                 });
@@ -190,7 +191,7 @@ export class EditItemModal extends Modal {
             text: 'Delete',
             cls: 'mod-warning'
         });
-        deleteBtn.addEventListener('click', () => this.deleteItem());
+        deleteBtn.addEventListener('click', () => { void this.deleteItem(); });
         
         buttonContainer.createEl('button', { text: 'Cancel' })
             .addEventListener('click', () => this.close());
@@ -199,7 +200,7 @@ export class EditItemModal extends Modal {
             text: 'Save',
             cls: 'mod-cta'
         });
-        saveBtn.addEventListener('click', () => this.saveItem());
+        saveBtn.addEventListener('click', () => { void this.saveItem(); });
     }
 
     private updateAmountField(
@@ -212,9 +213,9 @@ export class EditItemModal extends Modal {
         const isBoolean = this.unitType === 'boolean';
         
         // Toggle visibility
-        amountSetting.settingEl.style.display = isBoolean ? 'none' : '';
-        minimumSetting.settingEl.style.display = isBoolean ? 'none' : '';
-        booleanSetting.settingEl.style.display = isBoolean ? '' : 'none';
+        amountSetting.settingEl.toggleClass('stoker-hidden', isBoolean);
+        minimumSetting.settingEl.toggleClass('stoker-hidden', isBoolean);
+        booleanSetting.settingEl.toggleClass('stoker-hidden', !isBoolean);
         
         // Update unit placeholder based on type
         if (!isBoolean) {
@@ -224,6 +225,7 @@ export class EditItemModal extends Modal {
                     // Don't force a unit for portion type
                     break;
                 case 'weight':
+                    // eslint-disable-next-line obsidianmd/ui/sentence-case
                     unitInput.setPlaceholder('kg');
                     if (!this.unit || this.unit === 'pcs' || this.unit === 'L') {
                         this.unit = 'kg';
@@ -238,6 +240,7 @@ export class EditItemModal extends Modal {
                     }
                     break;
                 default:
+                    // eslint-disable-next-line obsidianmd/ui/sentence-case
                     unitInput.setPlaceholder('pcs');
                     if (!this.unit || this.unit === 'kg' || this.unit === 'L') {
                         this.unit = 'pcs';
@@ -267,7 +270,7 @@ export class EditItemModal extends Modal {
         
         const container = dropdown.selectEl.parentElement!;
         container.appendChild(input);
-        dropdown.selectEl.style.display = 'none';
+        dropdown.selectEl.addClass('stoker-hidden');
         input.focus();
         
         const finalize = () => {
@@ -289,7 +292,7 @@ export class EditItemModal extends Modal {
                 this.category = this.item.category;
             }
             input.remove();
-            dropdown.selectEl.style.display = '';
+            dropdown.selectEl.removeClass('stoker-hidden');
         };
         
         input.addEventListener('blur', finalize);

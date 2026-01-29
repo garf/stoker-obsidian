@@ -1,12 +1,7 @@
 /**
- * Characters that would break the markdown data structure
+ * Regex pattern for forbidden characters that would break the markdown data structure
  */
-const FORBIDDEN_CHARS = ['|', '[', ']', '\n', '\r'];
-
-/**
- * Regex pattern for forbidden characters
- */
-const FORBIDDEN_PATTERN = /[|\[\]\n\r]/g;
+const FORBIDDEN_PATTERN = /[|[\]\n\r]/g;
 
 /**
  * Validate a string input and return an error message if invalid

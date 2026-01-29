@@ -84,7 +84,7 @@ export class ListManager {
         for (const list of this.settings.lists) {
             if (!this.fileExists(list.filePath)) {
                 listsToRemove.push(list.id);
-                console.log(`Stoker: Removing list for missing file: ${list.filePath}`);
+                console.debug(`Stoker: Removing list for missing file: ${list.filePath}`);
             }
         }
 
@@ -122,7 +122,7 @@ export class ListManager {
                 this.settings.lists.push(newList);
                 hasChanges = true;
 
-                console.log(`Stoker: Auto-discovered inventory file: ${filePath}`);
+                console.debug(`Stoker: Auto-discovered inventory file: ${filePath}`);
             }
         }
 
@@ -143,7 +143,7 @@ export class ListManager {
     private startFileWatcher(): void {
         this.unsubscribeWatcher = watchForStokerFiles(
             this.app,
-            async (discovered: DiscoveredFile) => {
+            (discovered: DiscoveredFile) => {
                 if (discovered.type === 'inventory') {
                     // Check if already tracked
                     const existing = this.settings.lists.find(
@@ -156,16 +156,16 @@ export class ListManager {
                             filePath: discovered.file.path,
                         };
                         this.settings.lists.push(newList);
-                        await this.saveSettings();
+                        void this.saveSettings();
                         this.notifyListeners('list-created', newList);
-                        console.log(`Stoker: New inventory file detected: ${discovered.file.path}`);
+                        console.debug(`Stoker: New inventory file detected: ${discovered.file.path}`);
                     }
                 }
             },
-            async (file: TFile) => {
+            (file: TFile) => {
                 // File removed or no longer a stoker file
                 // We don't auto-remove from settings, user must manually delete
-                console.log(`Stoker: File no longer marked as stoker file: ${file.path}`);
+                console.debug(`Stoker: File no longer marked as stoker file: ${file.path}`);
             }
         );
     }
@@ -359,6 +359,8 @@ export class ListManager {
         this.settings.lists[index] = list;
         await this.saveSettings();
 
+        this.notifyListeners('list-updated', list);
+
         return list;
     }
 
@@ -422,7 +424,7 @@ export class ListManager {
         const list = this.settings.lists.find(l => l.filePath === filePath);
         if (!list) return false;
 
-        console.log(`Stoker: File deleted, removing list: ${filePath}`);
+        console.debug(`Stoker: File deleted, removing list: ${filePath}`);
         
         // Remove from settings
         this.settings.lists = this.settings.lists.filter(l => l.id !== list.id);

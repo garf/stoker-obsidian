@@ -52,10 +52,11 @@ export default class StokerPlugin extends Plugin {
         // Update cached store reference
         this._activeStore = this.listManager.getActiveStoreSync();
         
-        // Listen for list changes to update cached store
-        this.listManager.onListChange(async (type) => {
-            if (type === 'list-switched' || type === 'list-deleted' || type === 'list-created') {
-                this._activeStore = await this.listManager.getActiveStore();
+        // Listen for list changes to update cached store synchronously
+        this.listManager.onListChange((type) => {
+            if (type === 'list-switched' || type === 'list-deleted' || type === 'list-created' || type === 'list-updated') {
+                // Update synchronously for immediate access - avoids race conditions
+                this._activeStore = this.listManager.getActiveStoreSync();
             }
         });
 
@@ -133,7 +134,7 @@ export default class StokerPlugin extends Plugin {
                     const list = this.listManager.getLists().find(l => l.filePath === oldPath);
                     if (list) {
                         await this.listManager.updateList(list.id, { filePath: file.path });
-                        console.log(`Stoker: File renamed from ${oldPath} to ${file.path}`);
+                        console.debug(`Stoker: File renamed from ${oldPath} to ${file.path}`);
                     }
                 }
             })
@@ -143,16 +144,12 @@ export default class StokerPlugin extends Plugin {
     onunload(): void {
         // Stop watching for stoker files
         this.listManager?.stopFileWatcher();
-
-        // Clean up views
-        this.app.workspace.detachLeavesOfType(SIDEBAR_VIEW_TYPE);
-        this.app.workspace.detachLeavesOfType(INVENTORY_VIEW_TYPE);
-        this.app.workspace.detachLeavesOfType(REPORT_VIEW_TYPE);
-        this.app.workspace.detachLeavesOfType(LIST_MANAGER_VIEW_TYPE);
+        // Views are automatically cleaned up by Obsidian
     }
 
     async loadSettings(): Promise<void> {
-        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+        const data = await this.loadData() as Partial<StokerSettings> | null;
+        this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
     }
 
     async saveSettings(): Promise<void> {
@@ -171,14 +168,13 @@ export default class StokerPlugin extends Plugin {
         }
 
         // Check if there's an old inventory file path
+        // eslint-disable-next-line @typescript-eslint/no-deprecated
         if (this.settings.inventoryFilePath) {
-            // Check if the file exists
-            const file = this.app.vault.getAbstractFileByPath(this.settings.inventoryFilePath);
-            
             // Create a default list from the old file path
             const defaultList = {
                 id: Date.now().toString(36) + Math.random().toString(36).substring(2),
                 name: 'Default',
+                // eslint-disable-next-line @typescript-eslint/no-deprecated
                 filePath: this.settings.inventoryFilePath,
             };
             
@@ -187,7 +183,7 @@ export default class StokerPlugin extends Plugin {
             
             await this.saveSettings();
             
-            console.log('Stoker: Migrated to multi-list format with default list');
+            console.debug('Stoker: Migrated to multi-list format with default list');
         }
     }
 

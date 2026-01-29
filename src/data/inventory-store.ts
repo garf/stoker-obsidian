@@ -1,7 +1,6 @@
 import { TFile, Vault, Events } from 'obsidian';
 import { 
     InventoryItem, 
-    InventoryData, 
     InventoryEventType, 
     InventoryEventCallback,
     StockStatus 

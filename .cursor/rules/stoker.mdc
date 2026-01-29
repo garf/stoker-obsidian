@@ -8,8 +8,8 @@ Stoker is a **product-agnostic inventory tracking plugin** for Obsidian. Users c
 
 ### Data Layer
 
-- **`InventoryStore`** (`src/data/inventory-store.ts`): Core data management class that handles CRUD operations for inventory items. Stores data in markdown files with YAML frontmatter.
-- **`ListManager`** (`src/data/list-manager.ts`): Manages multiple inventory lists. Each list is a separate markdown file that can be synced via Obsidian Sync.
+- **`InventoryStore`** (`src/data/inventory-store.ts`): Core data management class that handles CRUD operations for inventory items. Stores data in markdown files with YAML frontmatter. Event-driven with subscription callbacks.
+- **`ListManager`** (`src/data/list-manager.ts`): Manages multiple inventory lists. Each list is a separate markdown file that can be synced via Obsidian Sync. Handles lazy-loading, caching, and file watching.
 
 ### Main Types (`src/types.ts`)
 
@@ -19,15 +19,38 @@ Stoker is a **product-agnostic inventory tracking plugin** for Obsidian. Users c
 - **`UnitType`**: `'count' | 'portion' | 'weight' | 'volume' | 'boolean'`
 - **`StockStatus`**: `'normal' | 'warning' | 'out' | 'in-stock'`
 
-### UI Layer (`src/ui/`)
+### UI Layer (`src/ui/`) - React-based
 
-- **`sidebar-view.ts`**: Compact sidebar panel for quick inventory access
-- **`inventory-leaf-view.ts`**: Full inventory view with search, sort, and filter
-- **`report-view.ts`**: Printable reports (shopping list, low stock, full inventory)
-- **`list-manager-view.ts`**: UI for managing multiple inventory lists
-- **`add-item-modal.ts`** / **`edit-item-modal.ts`**: Item creation/editing modals
-- **`category-modal.ts`**: Category management (rename, delete)
-- **`components.ts`**: Reusable UI components
+The UI uses React for all views. Each Obsidian `ItemView` is a thin shell that mounts a React component.
+
+#### React Infrastructure
+
+- **`context/AppContext.tsx`**: React context providing `App` and `Plugin` instances globally. Exports `useApp()`, `useObsidianApp()`, and `usePlugin()` hooks.
+- **`hooks/useInventoryStore.ts`**: Custom hook for subscribing to `InventoryStore` changes. Provides items, loading state, computed values (itemsByCategory, categories, lowStockItems), and action methods.
+- **`hooks/useListManager.ts`**: Custom hook for subscribing to `ListManager` changes. Provides lists, activeList, and list management methods.
+
+#### View Shells (mount React components)
+
+- **`sidebar-view.tsx`**: Mounts `SidebarView` component - compact sidebar panel
+- **`inventory-leaf-view.tsx`**: Mounts `InventoryView` component - full inventory with search/sort/filter
+- **`report-view.tsx`**: Mounts `ReportView` component - printable reports
+- **`list-manager-view.tsx`**: Mounts `ListManagerView` component - list management UI
+
+#### React Components (`src/ui/views/`)
+
+- **`InventoryView.tsx`**: Main inventory view with search, sort, filter, category grouping, item actions
+- **`SidebarView.tsx`**: Compact sidebar with categories, warnings, quick actions
+- **`ReportView.tsx`**: Report generation (shopping list, low stock, full inventory) with export options
+- **`ListManagerView.tsx`**: Manage inventory lists with stats, switch/delete/open actions
+
+#### Modals (native Obsidian)
+
+Modals use Obsidian's native `Modal` class with `Setting` components for consistent styling:
+
+- **`add-item-modal.ts`**: Create new inventory items
+- **`edit-item-modal.ts`**: Edit/delete existing items
+- **`create-list-modal.ts`**: Create new inventory lists
+- **`category-modal.ts`**: Rename/delete categories
 
 ### Commands (`src/commands/index.ts`)
 
@@ -64,4 +87,15 @@ Status characters: `[ ]` = normal, `[!]` = warning, `[-]` = out, `[x]` = in-stoc
 - Entry point: `src/main.ts` (minimal, delegates to modules)
 - Build: `npm run build` (esbuild)
 - Dev: `npm run dev` (watch mode)
+- Lint: `npm run lint` (eslint)
 - Plugin artifacts: `main.js`, `manifest.json`, `styles.css` at root
+- React: Uses React 18 with the new JSX transform (`jsx: "react-jsx"` in tsconfig)
+- Styling: Uses existing `styles.css` with Obsidian CSS variables for theming compatibility
+
+## React Patterns Used
+
+- **Context for globals**: `AppContext` provides plugin/app instances without prop drilling
+- **Custom hooks for data**: `useInventoryStore` and `useListManager` abstract subscription logic
+- **Thin view shells**: Obsidian `ItemView` classes only handle mounting/unmounting React roots
+- **Async handling**: Use `void` operator for fire-and-forget promises in event handlers
+- **Class toggling**: Use `element.toggleClass()` instead of `style.display` for visibility

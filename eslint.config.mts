@@ -17,9 +17,26 @@ export default tseslint.config(
 					]
 				},
 				tsconfigRootDir: import.meta.dirname,
-				extraFileExtensions: ['.json']
+				extraFileExtensions: ['.json'],
+				ecmaFeatures: {
+					jsx: true
+				}
 			},
 		},
+		settings: {
+			react: {
+				version: '18.0'
+			}
+		}
+	},
+	// React JSX runtime - no need to import React
+	{
+		files: ['**/*.tsx'],
+		languageOptions: {
+			globals: {
+				React: 'readonly'
+			}
+		}
 	},
 	...obsidianmd.configs.recommended,
 	globalIgnores([
