@@ -1,8 +1,12 @@
+import { FuzzySuggestModal, Notice } from 'obsidian';
 import type StokerPlugin from '../main';
 import { INVENTORY_VIEW_TYPE } from '../ui/inventory-leaf-view';
 import { SIDEBAR_VIEW_TYPE } from '../ui/sidebar-view';
 import { REPORT_VIEW_TYPE } from '../ui/report-view';
+import { LIST_MANAGER_VIEW_TYPE } from '../ui/list-manager-view';
 import { AddItemModal } from '../ui/add-item-modal';
+import { CreateListModal } from '../ui/create-list-modal';
+import { InventoryList } from '../types';
 
 /**
  * Register all plugin commands
@@ -39,6 +43,12 @@ export function registerCommands(plugin: StokerPlugin): void {
         id: 'add-item',
         name: 'Add new item to inventory',
         callback: () => {
+            // Check if there's an active list
+            const activeList = plugin.listManager.getActiveList();
+            if (!activeList) {
+                new Notice('No active inventory list. Please create or select a list first.');
+                return;
+            }
             new AddItemModal(plugin.app, plugin).open();
         },
     });
@@ -73,10 +83,15 @@ export function registerCommands(plugin: StokerPlugin): void {
         id: 'show-low-stock',
         name: 'Show low stock items',
         callback: async () => {
+            const activeList = plugin.listManager.getActiveList();
+            if (!activeList) {
+                new Notice('No active inventory list.');
+                return;
+            }
+            
             const lowStock = plugin.store.getLowStockItems();
             
             if (lowStock.length === 0) {
-                const { Notice } = await import('obsidian');
                 new Notice('All items are well stocked!');
                 return;
             }
@@ -125,6 +140,62 @@ export function registerCommands(plugin: StokerPlugin): void {
             }
         },
     });
+
+    // Open list manager
+    plugin.addCommand({
+        id: 'open-list-manager',
+        name: 'Open inventory list manager',
+        callback: async () => {
+            const { workspace } = plugin.app;
+            
+            // Check if view already exists
+            const existing = workspace.getLeavesOfType(LIST_MANAGER_VIEW_TYPE);
+            if (existing.length > 0 && existing[0]) {
+                workspace.revealLeaf(existing[0]);
+                return;
+            }
+            
+            // Create new view
+            const leaf = workspace.getLeaf('tab');
+            if (leaf) {
+                await leaf.setViewState({
+                    type: LIST_MANAGER_VIEW_TYPE,
+                    active: true,
+                });
+                workspace.revealLeaf(leaf);
+            }
+        },
+    });
+
+    // Quick switch list
+    plugin.addCommand({
+        id: 'switch-list',
+        name: 'Switch to inventory list...',
+        callback: () => {
+            const lists = plugin.listManager.getLists();
+            
+            if (lists.length === 0) {
+                new Notice('No inventory lists. Create one first.');
+                return;
+            }
+            
+            if (lists.length === 1) {
+                new Notice(`Only one list available: ${lists[0]?.name}`);
+                return;
+            }
+            
+            new ListSwitcherModal(plugin).open();
+        },
+    });
+
+    // Create new list
+    plugin.addCommand({
+        id: 'create-list',
+        name: 'Create new inventory list',
+        callback: () => {
+            new CreateListModal(plugin.app, plugin).open();
+        },
+    });
 }
 
 /**
@@ -153,3 +224,30 @@ export function registerRibbonIcon(plugin: StokerPlugin): void {
     });
 }
 
+/**
+ * Fuzzy suggester modal for switching between lists
+ */
+class ListSwitcherModal extends FuzzySuggestModal<InventoryList> {
+    plugin: StokerPlugin;
+
+    constructor(plugin: StokerPlugin) {
+        super(plugin.app);
+        this.plugin = plugin;
+        this.setPlaceholder('Select an inventory list...');
+    }
+
+    getItems(): InventoryList[] {
+        return this.plugin.listManager.getLists();
+    }
+
+    getItemText(list: InventoryList): string {
+        const activeList = this.plugin.listManager.getActiveList();
+        const isActive = activeList?.id === list.id;
+        return isActive ? `${list.name} (active)` : list.name;
+    }
+
+    async onChooseItem(list: InventoryList): Promise<void> {
+        await this.plugin.listManager.switchList(list.id);
+        new Notice(`Switched to: ${list.name}`);
+    }
+}

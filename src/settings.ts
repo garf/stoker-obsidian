@@ -1,6 +1,7 @@
-import { App, PluginSettingTab, Setting } from 'obsidian';
+import { App, PluginSettingTab, Setting, setIcon } from 'obsidian';
 import type StokerPlugin from './main';
 import { StokerSettings, DEFAULT_SETTINGS } from './types';
+import { LIST_MANAGER_VIEW_TYPE } from './ui/list-manager-view';
 
 export type { StokerSettings };
 export { DEFAULT_SETTINGS };
@@ -19,20 +20,20 @@ export class StokerSettingTab extends PluginSettingTab {
         
         containerEl.createEl('h2', { text: 'Stoker settings' });
         
-        // Inventory file path
-        new Setting(containerEl)
-            .setName('Inventory file')
-            .setDesc('Path to the markdown file where inventory data is stored')
-            .addText(text => text
-                .setPlaceholder('stoker-inventory.md')
-                .setValue(this.plugin.settings.inventoryFilePath)
-                .onChange(async (value) => {
-                    this.plugin.settings.inventoryFilePath = value || DEFAULT_SETTINGS.inventoryFilePath;
-                    await this.plugin.saveSettings();
-                    // Update store path
-                    this.plugin.store.setFilePath(this.plugin.settings.inventoryFilePath);
-                    await this.plugin.store.load();
-                }));
+        // Inventory lists section
+        containerEl.createEl('h3', { text: 'Inventory lists' });
+        
+        // Show current lists summary
+        const lists = this.plugin.listManager.getLists();
+        const activeList = this.plugin.listManager.getActiveList();
+        
+        const listsSummary = new Setting(containerEl)
+            .setName('Manage lists')
+            .setDesc(`You have ${lists.length} inventory list${lists.length !== 1 ? 's' : ''}.${activeList ? ` Active: ${activeList.name}` : ''}`)
+            .addButton(button => button
+                .setButtonText('Open list manager')
+                .setCta()
+                .onClick(() => this.openListManager()));
         
         // Show sidebar on startup
         new Setting(containerEl)
@@ -86,7 +87,28 @@ export class StokerSettingTab extends PluginSettingTab {
             text: 'Stoker helps you track your food inventory. Add items, set minimum thresholds, and get warnings when running low.' 
         });
         aboutDiv.createEl('p', { 
-            text: 'Your inventory is stored as a markdown file, so it syncs with Obsidian Sync and can be edited manually.' 
+            text: 'You can create multiple inventory lists (e.g., home, office, vacation house), each stored in a separate markdown file that syncs with Obsidian Sync.' 
         });
+    }
+
+    private async openListManager(): Promise<void> {
+        const { workspace } = this.app;
+        
+        // Check if view already exists
+        const existing = workspace.getLeavesOfType(LIST_MANAGER_VIEW_TYPE);
+        if (existing.length > 0 && existing[0]) {
+            workspace.revealLeaf(existing[0]);
+            return;
+        }
+        
+        // Create new view in a tab
+        const leaf = workspace.getLeaf('tab');
+        if (leaf) {
+            await leaf.setViewState({
+                type: LIST_MANAGER_VIEW_TYPE,
+                active: true,
+            });
+            workspace.revealLeaf(leaf);
+        }
     }
 }

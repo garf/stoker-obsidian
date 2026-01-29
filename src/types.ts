@@ -41,11 +41,27 @@ export interface Category {
 }
 
 /**
+ * Represents an inventory list
+ */
+export interface InventoryList {
+    /** Unique identifier for the list */
+    id: string;
+    /** Display name of the list */
+    name: string;
+    /** Path to the markdown file storing this list */
+    filePath: string;
+}
+
+/**
  * Plugin settings
  */
 export interface StokerSettings {
-    /** Path to the inventory markdown file */
+    /** @deprecated Use lists array instead. Kept for migration. */
     inventoryFilePath: string;
+    /** All inventory lists */
+    lists: InventoryList[];
+    /** ID of the currently active list */
+    activeListId: string | null;
     /** Default categories to show */
     defaultCategories: string[];
     /** Whether to show sidebar on startup */
@@ -59,6 +75,8 @@ export interface StokerSettings {
  */
 export const DEFAULT_SETTINGS: StokerSettings = {
     inventoryFilePath: 'stoker-inventory.md',
+    lists: [],
+    activeListId: null,
     defaultCategories: ['Dairy', 'Meat', 'Vegetables', 'Fruits', 'Grains', 'Beverages', 'Snacks'],
     showSidebarOnStartup: true,
     collapsedCategories: [],
@@ -85,4 +103,14 @@ export type InventoryEventType = 'item-added' | 'item-updated' | 'item-deleted' 
  * Callback for inventory change events
  */
 export type InventoryEventCallback = (type: InventoryEventType, item?: FoodItem) => void;
+
+/**
+ * Event types for list management changes
+ */
+export type ListEventType = 'list-created' | 'list-deleted' | 'list-switched';
+
+/**
+ * Callback for list change events
+ */
+export type ListEventCallback = (type: ListEventType, list?: InventoryList) => void;
 

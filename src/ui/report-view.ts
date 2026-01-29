@@ -2,6 +2,7 @@ import { ItemView, WorkspaceLeaf, setIcon } from 'obsidian';
 import type StokerPlugin from '../main';
 import { FoodItem, StockStatus } from '../types';
 import { formatAmount } from './components';
+import { LIST_MANAGER_VIEW_TYPE } from './list-manager-view';
 
 export const REPORT_VIEW_TYPE = 'stoker-report-view';
 
@@ -80,6 +81,9 @@ export class ReportView extends ItemView {
         // Register for changes
         this.plugin.store.onInventoryChange(() => this.renderReport());
         
+        // Register for list changes
+        this.plugin.listManager.onListChange(() => this.renderReport());
+        
         // Initial render
         this.renderReport();
     }
@@ -90,6 +94,13 @@ export class ReportView extends ItemView {
 
     private renderReport(): void {
         this.reportContentEl.empty();
+        
+        // Check if there's an active list
+        const activeList = this.plugin.listManager.getActiveList();
+        if (!activeList) {
+            this.renderNoListState();
+            return;
+        }
         
         switch (this.currentReport) {
             case 'shopping-list':
@@ -360,6 +371,46 @@ export class ReportView extends ItemView {
         
         if (item.plannedRestock) {
             li.createSpan({ cls: 'stoker-report-item-restock', text: '🛒' });
+        }
+    }
+
+    private renderNoListState(): void {
+        const emptyState = this.reportContentEl.createDiv({ cls: 'stoker-report-empty' });
+        
+        const icon = emptyState.createDiv({ cls: 'stoker-report-empty-icon' });
+        setIcon(icon, 'inbox');
+        
+        emptyState.createEl('h3', { text: 'No active list' });
+        emptyState.createEl('p', { 
+            cls: 'stoker-report-empty-text', 
+            text: 'Create or select an inventory list to generate reports.' 
+        });
+        
+        const btn = emptyState.createEl('button', { cls: 'stoker-btn mod-cta' });
+        const btnIcon = btn.createSpan({ cls: 'stoker-btn-icon' });
+        setIcon(btnIcon, 'list');
+        btn.createSpan({ text: 'Open list manager' });
+        btn.addEventListener('click', () => this.openListManager());
+    }
+
+    private async openListManager(): Promise<void> {
+        const { workspace } = this.app;
+        
+        // Check if view already exists
+        const existing = workspace.getLeavesOfType(LIST_MANAGER_VIEW_TYPE);
+        if (existing.length > 0 && existing[0]) {
+            workspace.revealLeaf(existing[0]);
+            return;
+        }
+        
+        // Create new view in a tab
+        const leaf = workspace.getLeaf('tab');
+        if (leaf) {
+            await leaf.setViewState({
+                type: LIST_MANAGER_VIEW_TYPE,
+                active: true,
+            });
+            workspace.revealLeaf(leaf);
         }
     }
 }

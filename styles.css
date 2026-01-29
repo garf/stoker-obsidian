@@ -2,7 +2,9 @@
 
 /* ===== Base Variables ===== */
 .stoker-sidebar,
-.stoker-inventory-view {
+.stoker-inventory-view,
+.stoker-list-manager-view,
+.stoker-report-view {
     --stoker-warning-bg: rgba(var(--color-yellow-rgb), 0.15);
     --stoker-warning-border: var(--color-yellow);
     --stoker-danger-bg: rgba(var(--color-red-rgb), 0.15);
@@ -613,9 +615,9 @@
 .stoker-modal-buttons {
     display: flex;
     justify-content: flex-end;
-    gap: var(--stoker-spacing-md);
-    margin-top: var(--stoker-spacing-lg);
-    padding-top: var(--stoker-spacing-lg);
+    gap: 16px;
+    margin-top: 24px;
+    padding-top: 16px;
     border-top: 1px solid var(--background-modifier-border);
 }
 
@@ -1156,6 +1158,433 @@
     }
 }
 
+/* ===== Sidebar List Selector ===== */
+.stoker-sidebar-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--stoker-spacing-sm);
+}
+
+.stoker-sidebar-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.stoker-sidebar-list-row {
+    display: flex;
+    align-items: center;
+    gap: var(--stoker-spacing-xs);
+}
+
+.stoker-list-selector {
+    display: flex;
+    align-items: center;
+    gap: var(--stoker-spacing-sm);
+    padding: var(--stoker-spacing-sm) var(--stoker-spacing-md);
+    background: var(--background-modifier-form-field);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: var(--stoker-item-radius);
+    cursor: pointer;
+    transition: all 150ms ease;
+    flex: 1;
+}
+
+.stoker-list-selector:hover {
+    background: var(--background-modifier-hover);
+    border-color: var(--background-modifier-border-hover);
+}
+
+.stoker-list-selector-icon {
+    display: flex;
+    align-items: center;
+    color: var(--text-muted);
+}
+
+.stoker-list-selector-icon svg {
+    width: 14px;
+    height: 14px;
+}
+
+.stoker-list-selector-name {
+    flex: 1;
+    font-size: var(--font-ui-small);
+    color: var(--text-normal);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.stoker-list-selector-chevron {
+    display: flex;
+    align-items: center;
+    color: var(--text-faint);
+}
+
+.stoker-list-selector-chevron svg {
+    width: 12px;
+    height: 12px;
+}
+
+/* Manage lists button */
+.stoker-manage-lists-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background: var(--background-modifier-form-field);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: var(--stoker-item-radius);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 150ms ease;
+    flex-shrink: 0;
+}
+
+.stoker-manage-lists-btn:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+    border-color: var(--background-modifier-border-hover);
+}
+
+.stoker-manage-lists-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* ===== List Manager View ===== */
+.stoker-list-manager-view {
+    padding: 24px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.stoker-list-manager-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.stoker-list-manager-header h2 {
+    margin: 0;
+    font-size: 1.5em;
+}
+
+/* New list button in header */
+.stoker-list-manager-header .stoker-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--interactive-accent);
+    border: none;
+    border-radius: var(--radius-s);
+    color: var(--text-on-accent);
+    font-size: var(--font-ui-small);
+    font-weight: var(--font-medium);
+    cursor: pointer;
+    transition: background 150ms ease;
+    white-space: nowrap;
+    width: auto;
+    height: auto;
+}
+
+.stoker-list-manager-header .stoker-btn:hover {
+    background: var(--interactive-accent-hover);
+}
+
+.stoker-list-manager-header .stoker-btn .stoker-btn-icon {
+    display: flex;
+    align-items: center;
+}
+
+.stoker-list-manager-header .stoker-btn .stoker-btn-icon svg {
+    width: 14px;
+    height: 14px;
+}
+
+.stoker-list-manager-desc {
+    color: var(--text-muted);
+    font-size: var(--font-ui-small);
+    margin: 0 0 24px;
+}
+
+.stoker-list-manager-content {
+    flex: 1;
+}
+
+.stoker-lists-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* List Item */
+.stoker-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: var(--stoker-item-radius);
+    cursor: pointer;
+    transition: all 150ms ease;
+}
+
+.stoker-list-item:hover {
+    background: var(--background-modifier-hover);
+    border-color: var(--background-modifier-border-hover);
+}
+
+.stoker-list-item--active {
+    background: rgba(var(--color-accent-rgb, var(--interactive-accent-rgb)), 0.1);
+    border-color: var(--interactive-accent);
+    border-left: 3px solid var(--interactive-accent);
+}
+
+.stoker-list-item--active:hover {
+    background: rgba(var(--color-accent-rgb, var(--interactive-accent-rgb)), 0.15);
+}
+
+.stoker-list-item-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+    min-width: 0;
+}
+
+.stoker-list-item-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    color: var(--text-muted);
+    background: var(--background-modifier-form-field);
+    border-radius: var(--radius-s);
+}
+
+.stoker-list-item--active .stoker-list-item-icon {
+    color: var(--interactive-accent);
+    background: rgba(var(--color-accent-rgb, var(--interactive-accent-rgb)), 0.15);
+}
+
+.stoker-list-item-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.stoker-list-item-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.stoker-list-item-name {
+    font-size: 1em;
+    font-weight: var(--font-medium);
+    color: var(--text-normal);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+}
+
+.stoker-list-item-path {
+    font-size: 0.85em;
+    color: var(--text-faint);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: var(--font-monospace);
+}
+
+/* List item stats row */
+.stoker-list-item-stats {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+}
+
+.stoker-list-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75em;
+    color: var(--text-muted);
+    padding: 2px 6px;
+    background: var(--background-modifier-form-field);
+    border-radius: var(--radius-s);
+}
+
+.stoker-list-stat-icon {
+    display: flex;
+    align-items: center;
+}
+
+.stoker-list-stat-icon svg {
+    width: 12px;
+    height: 12px;
+}
+
+.stoker-list-stat--warning {
+    background: var(--stoker-warning-bg);
+    color: var(--color-yellow);
+}
+
+.stoker-list-stat--danger {
+    background: var(--stoker-danger-bg);
+    color: var(--color-red);
+}
+
+.stoker-list-item-actions {
+    display: flex;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 150ms ease;
+}
+
+.stoker-list-item:hover .stoker-list-item-actions {
+    opacity: 1;
+}
+
+.stoker-list-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: var(--background-modifier-form-field);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: var(--radius-s);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 150ms ease;
+}
+
+.stoker-list-action-btn:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+    border-color: var(--background-modifier-border-hover);
+}
+
+.stoker-list-action-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* List count badge */
+.stoker-list-item-count {
+    font-size: 0.8em;
+    color: var(--text-faint);
+    background: var(--background-modifier-form-field);
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 8px;
+}
+
+/* Modal info text */
+.stoker-modal-info {
+    font-size: var(--font-ui-smaller);
+    color: var(--text-muted);
+    padding: var(--stoker-spacing-sm) var(--stoker-spacing-md);
+    background: var(--background-secondary);
+    border-radius: var(--stoker-item-radius);
+    margin-top: var(--stoker-spacing-md);
+}
+
+/* Empty state button with icon */
+.stoker-empty-state .stoker-btn,
+.stoker-list-manager-view .stoker-empty-state button {
+    width: auto;
+    height: auto;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--interactive-accent);
+    border: none;
+    border-radius: var(--stoker-item-radius);
+    color: var(--text-on-accent);
+    font-size: var(--font-ui-small);
+    cursor: pointer;
+    transition: background 150ms ease;
+}
+
+.stoker-empty-state .stoker-btn:hover,
+.stoker-list-manager-view .stoker-empty-state button:hover {
+    background: var(--interactive-accent-hover);
+}
+
+.stoker-btn-icon {
+    display: flex;
+    align-items: center;
+}
+
+.stoker-btn-icon svg {
+    width: 14px;
+    height: 14px;
+}
+
+.stoker-empty-state h3 {
+    margin: 0 0 8px;
+    font-size: 1.1em;
+    color: var(--text-normal);
+}
+
+.stoker-empty-state p {
+    margin: 0 0 16px;
+    font-size: var(--font-ui-small);
+    color: var(--text-muted);
+}
+
+/* List manager specific empty state */
+.stoker-list-manager-view .stoker-empty-state {
+    padding: 48px;
+    min-height: 300px;
+}
+
+/* ===== Missing File State ===== */
+.stoker-missing-file .stoker-warning-icon {
+    color: var(--color-yellow);
+}
+
+.stoker-missing-file-path {
+    font-family: var(--font-monospace);
+    font-size: var(--font-ui-smaller);
+    background: var(--background-secondary);
+    padding: var(--stoker-spacing-xs) var(--stoker-spacing-sm);
+    border-radius: var(--radius-s);
+    word-break: break-all;
+}
+
+.stoker-missing-file-hint {
+    color: var(--text-faint);
+    font-size: var(--font-ui-smaller);
+}
+
+.stoker-missing-file-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--stoker-spacing-sm);
+    margin-top: var(--stoker-spacing-md);
+}
+
+.stoker-missing-file-actions .stoker-btn {
+    justify-content: center;
+}
+
 /* ===== Mobile Responsive ===== */
 @media (max-width: 600px) {
     .stoker-controls-row {
@@ -1172,6 +1601,10 @@
     }
     
     .stoker-item-actions {
+        opacity: 1;
+    }
+    
+    .stoker-list-item-actions {
         opacity: 1;
     }
 }

@@ -1,22 +1,60 @@
 import { Plugin } from 'obsidian';
 import { StokerSettings, DEFAULT_SETTINGS, StokerSettingTab } from './settings';
 import { InventoryStore } from './data/inventory-store';
+import { ListManager } from './data/list-manager';
 import { StokerSidebarView, SIDEBAR_VIEW_TYPE } from './ui/sidebar-view';
 import { InventoryLeafView, INVENTORY_VIEW_TYPE } from './ui/inventory-leaf-view';
 import { ReportView, REPORT_VIEW_TYPE } from './ui/report-view';
+import { ListManagerView, LIST_MANAGER_VIEW_TYPE } from './ui/list-manager-view';
 import { registerCommands, registerRibbonIcon } from './commands';
 
 export default class StokerPlugin extends Plugin {
     settings: StokerSettings;
-    store: InventoryStore;
+    listManager: ListManager;
+    
+    // Cached reference to active store for synchronous access
+    private _activeStore: InventoryStore | null = null;
+
+    /**
+     * Get the active inventory store (for backward compatibility)
+     * Note: This may return null if no list is active
+     */
+    get store(): InventoryStore {
+        if (!this._activeStore) {
+            // Try to get from list manager synchronously
+            this._activeStore = this.listManager?.getActiveStoreSync() ?? null;
+        }
+        // Return a dummy store if none available to prevent null errors
+        if (!this._activeStore) {
+            this._activeStore = new InventoryStore(this.app.vault, '');
+        }
+        return this._activeStore;
+    }
 
     async onload(): Promise<void> {
         // Load settings
         await this.loadSettings();
 
-        // Initialize inventory store
-        this.store = new InventoryStore(this.app.vault, this.settings.inventoryFilePath);
-        await this.store.load();
+        // Migrate from single file to lists if needed
+        await this.migrateToMultipleLists();
+
+        // Initialize list manager (with full app for metadata cache access)
+        this.listManager = new ListManager(
+            this.app,
+            this.settings,
+            () => this.saveSettings()
+        );
+        await this.listManager.initialize();
+        
+        // Update cached store reference
+        this._activeStore = this.listManager.getActiveStoreSync();
+        
+        // Listen for list changes to update cached store
+        this.listManager.onListChange(async (type) => {
+            if (type === 'list-switched' || type === 'list-deleted' || type === 'list-created') {
+                this._activeStore = await this.listManager.getActiveStore();
+            }
+        });
 
         // Register views
         this.registerView(
@@ -32,6 +70,11 @@ export default class StokerPlugin extends Plugin {
         this.registerView(
             REPORT_VIEW_TYPE,
             (leaf) => new ReportView(leaf, this)
+        );
+
+        this.registerView(
+            LIST_MANAGER_VIEW_TYPE,
+            (leaf) => new ListManagerView(leaf, this)
         );
 
         // Register commands
@@ -50,22 +93,59 @@ export default class StokerPlugin extends Plugin {
             });
         }
 
-        // Watch for file changes to the inventory file
+        // Watch for file changes to any inventory file
         this.registerEvent(
             this.app.vault.on('modify', async (file) => {
-                if (file.path === this.settings.inventoryFilePath) {
-                    // Reload data when file is modified externally
-                    await this.store.load();
+                const filePaths = this.listManager.getAllFilePaths();
+                if (filePaths.includes(file.path)) {
+                    // Check if this is the active list
+                    const activeList = this.listManager.getActiveList();
+                    if (activeList && activeList.filePath === file.path) {
+                        // Reload the active store
+                        await this.listManager.reloadActiveStore();
+                    }
+                }
+            })
+        );
+
+        // Watch for file deletions
+        this.registerEvent(
+            this.app.vault.on('delete', async (file) => {
+                const filePaths = this.listManager.getAllFilePaths();
+                if (filePaths.includes(file.path)) {
+                    // Handle the deletion - remove from lists
+                    await this.listManager.handleFileDeleted(file.path);
+                    // Update cached store reference
+                    this._activeStore = await this.listManager.getActiveStore();
+                }
+            })
+        );
+
+        // Watch for file renames (moving files)
+        this.registerEvent(
+            this.app.vault.on('rename', async (file, oldPath) => {
+                const filePaths = this.listManager.getAllFilePaths();
+                if (filePaths.includes(oldPath)) {
+                    // Update the list's file path to the new location
+                    const list = this.listManager.getLists().find(l => l.filePath === oldPath);
+                    if (list) {
+                        await this.listManager.updateList(list.id, { filePath: file.path });
+                        console.log(`Stoker: File renamed from ${oldPath} to ${file.path}`);
+                    }
                 }
             })
         );
     }
 
     onunload(): void {
+        // Stop watching for stoker files
+        this.listManager?.stopFileWatcher();
+
         // Clean up views
         this.app.workspace.detachLeavesOfType(SIDEBAR_VIEW_TYPE);
         this.app.workspace.detachLeavesOfType(INVENTORY_VIEW_TYPE);
         this.app.workspace.detachLeavesOfType(REPORT_VIEW_TYPE);
+        this.app.workspace.detachLeavesOfType(LIST_MANAGER_VIEW_TYPE);
     }
 
     async loadSettings(): Promise<void> {
@@ -74,6 +154,38 @@ export default class StokerPlugin extends Plugin {
 
     async saveSettings(): Promise<void> {
         await this.saveData(this.settings);
+    }
+
+    /**
+     * Migrate from single inventoryFilePath to lists array
+     * This handles users upgrading from the old single-file version
+     */
+    private async migrateToMultipleLists(): Promise<void> {
+        // Check if migration is needed
+        if (this.settings.lists.length > 0) {
+            // Already has lists, no migration needed
+            return;
+        }
+
+        // Check if there's an old inventory file path
+        if (this.settings.inventoryFilePath) {
+            // Check if the file exists
+            const file = this.app.vault.getAbstractFileByPath(this.settings.inventoryFilePath);
+            
+            // Create a default list from the old file path
+            const defaultList = {
+                id: Date.now().toString(36) + Math.random().toString(36).substring(2),
+                name: 'Default',
+                filePath: this.settings.inventoryFilePath,
+            };
+            
+            this.settings.lists = [defaultList];
+            this.settings.activeListId = defaultList.id;
+            
+            await this.saveSettings();
+            
+            console.log('Stoker: Migrated to multi-list format with default list');
+        }
     }
 
     private async activateSidebarView(): Promise<void> {

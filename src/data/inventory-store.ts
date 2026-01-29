@@ -79,6 +79,7 @@ export class InventoryStore extends Events {
                     const dateStr = trimmed.split(':')[1];
                     this.lastUpdated = dateStr?.trim() ?? (new Date().toISOString().split('T')[0] ?? '');
                 }
+                // stoker-plugin: inventory is handled by file-discovery, no need to parse here
                 continue;
             }
             
@@ -204,8 +205,9 @@ export class InventoryStore extends Events {
     private toMarkdown(): string {
         const lines: string[] = [];
         
-        // YAML frontmatter
+        // YAML frontmatter with stoker-plugin marker
         lines.push('---');
+        lines.push('stoker-plugin: inventory');
         lines.push(`version: ${this.version}`);
         lines.push(`lastUpdated: ${new Date().toISOString().split('T')[0] ?? ''}`);
         lines.push('---');
@@ -313,7 +315,30 @@ export class InventoryStore extends Events {
         if (file instanceof TFile) {
             await this.vault.modify(file, content);
         } else {
+            // Ensure parent directories exist before creating the file
+            await this.ensureParentDirExists();
             await this.vault.create(this.filePath, content);
+        }
+    }
+
+    /**
+     * Ensure parent directories exist for the file path
+     */
+    private async ensureParentDirExists(): Promise<void> {
+        const parts = this.filePath.split('/');
+        if (parts.length <= 1) return; // No parent directory
+        
+        // Remove the filename to get directory path
+        parts.pop();
+        const dirPath = parts.join('/');
+        
+        if (!dirPath) return;
+        
+        // Check if directory exists
+        const existing = this.vault.getAbstractFileByPath(dirPath);
+        if (!existing) {
+            // Create directory (and any parent directories)
+            await this.vault.createFolder(dirPath);
         }
     }
 

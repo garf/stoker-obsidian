@@ -10,6 +10,7 @@ import {
     createWarningBanner,
     createOutOfStockBanner 
 } from './components';
+import { LIST_MANAGER_VIEW_TYPE } from './list-manager-view';
 
 export const INVENTORY_VIEW_TYPE = 'stoker-inventory-view';
 
@@ -149,6 +150,9 @@ export class InventoryLeafView extends ItemView {
         
         // Register for inventory changes
         this.plugin.store.onInventoryChange(() => this.refresh());
+        
+        // Register for list changes (when switching lists)
+        this.plugin.listManager.onListChange(() => this.refresh());
         
         // Initial render
         await this.refresh();
@@ -329,6 +333,14 @@ export class InventoryLeafView extends ItemView {
 
     async refresh(): Promise<void> {
         this.inventoryContentEl.empty();
+        
+        // Check if there's an active list
+        const activeList = this.plugin.listManager.getActiveList();
+        if (!activeList) {
+            const emptyState = this.createNoListState();
+            this.inventoryContentEl.appendChild(emptyState);
+            return;
+        }
         
         let items = this.plugin.store.getItems();
         
@@ -590,6 +602,46 @@ export class InventoryLeafView extends ItemView {
         if (leaf) {
             await leaf.setViewState({
                 type: REPORT_VIEW_TYPE,
+                active: true,
+            });
+            workspace.revealLeaf(leaf);
+        }
+    }
+
+    private createNoListState(): HTMLElement {
+        const container = document.createElement('div');
+        container.className = 'stoker-empty-state';
+        
+        const icon = container.createDiv({ cls: 'stoker-empty-icon' });
+        setIcon(icon, 'inbox');
+        
+        container.createEl('h3', { text: 'No active list' });
+        container.createEl('p', { text: 'Create or select an inventory list to start tracking items.' });
+        
+        const createBtn = container.createEl('button', { cls: 'stoker-btn mod-cta' });
+        const createIcon = createBtn.createSpan({ cls: 'stoker-btn-icon' });
+        setIcon(createIcon, 'list');
+        createBtn.createSpan({ text: 'Open list manager' });
+        createBtn.addEventListener('click', () => this.openListManager());
+        
+        return container;
+    }
+
+    private async openListManager(): Promise<void> {
+        const { workspace } = this.app;
+        
+        // Check if view already exists
+        const existing = workspace.getLeavesOfType(LIST_MANAGER_VIEW_TYPE);
+        if (existing.length > 0 && existing[0]) {
+            workspace.revealLeaf(existing[0]);
+            return;
+        }
+        
+        // Create new view in a tab
+        const leaf = workspace.getLeaf('tab');
+        if (leaf) {
+            await leaf.setViewState({
+                type: LIST_MANAGER_VIEW_TYPE,
                 active: true,
             });
             workspace.revealLeaf(leaf);
