@@ -18,7 +18,7 @@ export interface DiscoveredFile {
 /**
  * The frontmatter key used to identify stoker files
  */
-export const STOKER_FRONTMATTER_KEY = 'stoker-plugin';
+export const STOKER_FRONTMATTER_KEY = 'stoker';
 
 /**
  * Checks if a file's metadata indicates it's a stoker file

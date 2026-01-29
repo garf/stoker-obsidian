@@ -43,7 +43,7 @@ Inventory files use markdown with YAML frontmatter:
 
 ```markdown
 ---
-stoker-plugin: inventory
+stoker: inventory
 version: 1
 lastUpdated: 2025-01-29
 ---

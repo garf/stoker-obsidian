@@ -71,7 +71,7 @@ export class ListManager {
 
     /**
      * Sync discovered inventory files with the settings
-     * This finds all files with stoker-plugin: inventory frontmatter
+     * This finds all files with stoker: inventory frontmatter
      * and adds them to the lists if not already present.
      * Also removes lists whose files no longer exist.
      */

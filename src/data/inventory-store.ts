@@ -79,7 +79,7 @@ export class InventoryStore extends Events {
                     const dateStr = trimmed.split(':')[1];
                     this.lastUpdated = dateStr?.trim() ?? (new Date().toISOString().split('T')[0] ?? '');
                 }
-                // stoker-plugin: inventory is handled by file-discovery, no need to parse here
+                // stoker: inventory is handled by file-discovery, no need to parse here
                 continue;
             }
             
@@ -205,9 +205,9 @@ export class InventoryStore extends Events {
     private toMarkdown(): string {
         const lines: string[] = [];
         
-        // YAML frontmatter with stoker-plugin marker
+        // YAML frontmatter with stoker marker
         lines.push('---');
-        lines.push('stoker-plugin: inventory');
+        lines.push('stoker: inventory');
         lines.push(`version: ${this.version}`);
         lines.push(`lastUpdated: ${new Date().toISOString().split('T')[0] ?? ''}`);
         lines.push('---');

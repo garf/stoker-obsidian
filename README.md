@@ -25,7 +25,7 @@ Track any inventory in your Obsidian vault. Monitor stock levels, set minimum th
 ### Manual Installation
 
 1. Download `main.js`, `manifest.json`, and `styles.css` from the latest release
-2. Create a folder `<vault>/.obsidian/plugins/stoker-plugin/`
+2. Create a folder `<vault>/.obsidian/plugins/stoker/`
 3. Copy the downloaded files into this folder
 4. Reload Obsidian and enable the plugin in **Settings → Community plugins**
 
@@ -75,7 +75,7 @@ Inventory data is stored in markdown files with the following format:
 
 ```markdown
 ---
-stoker-plugin: inventory
+stoker: inventory
 version: 1
 lastUpdated: 2025-01-29
 ---
@@ -90,7 +90,7 @@ lastUpdated: 2025-01-29
 
 ## Support
 
-- Report issues on [GitHub](https://github.com/garf/stoker-plugin)
+- Report issues on [GitHub](https://github.com/garf/stoker)
 - For questions, use GitHub Discussions
 
 ## License

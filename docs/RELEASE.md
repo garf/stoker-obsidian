@@ -79,11 +79,11 @@ For your initial release, submit to the Obsidian community plugins directory:
 
 ```json
 {
-  "id": "stoker-plugin",
+  "id": "stoker",
   "name": "Stoker",
   "author": "Dinar Garipov",
   "description": "Manage items in your stock.",
-  "repo": "YOUR-USERNAME/stoker-plugin"
+  "repo": "YOUR-USERNAME/stoker"
 }
 ```
 
