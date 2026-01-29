@@ -91,16 +91,21 @@ export class InventoryStore extends Events {
                 continue;
             }
             
-            // Parse item lines: - [ ] Name | amount unit | min: X
-            // or - [x] Name | in stock (for boolean in-stock)
-            // or - [-] Name | out of stock (for boolean out-of-stock)
-            // or - [!] Name | amount unit | min: X (warning)
-            const itemMatch = trimmed.match(/^- \[(.)\] (.+)$/);
-            if (itemMatch && itemMatch[1] && itemMatch[2]) {
-                const statusChar = itemMatch[1];
-                const itemContent = itemMatch[2];
+            // Parse item lines: - Name | amount unit | min: X
+            // or - Name | in stock (for boolean in-stock)
+            // or - Name | out of stock (for boolean out-of-stock)
+            // Also support legacy checkbox format for backwards compatibility
+            const bulletMatch = trimmed.match(/^- (.+)$/);
+            if (bulletMatch && bulletMatch[1]) {
+                let itemContent = bulletMatch[1];
                 
-                const item = this.parseItemContent(itemContent, currentCategory, statusChar);
+                // Strip legacy checkbox prefix if present: [x], [ ], [-], [!]
+                const checkboxMatch = itemContent.match(/^\[.\] (.+)$/);
+                if (checkboxMatch && checkboxMatch[1]) {
+                    itemContent = checkboxMatch[1];
+                }
+                
+                const item = this.parseItemContent(itemContent, currentCategory);
                 if (item) {
                     this.items.push(item);
                 }
@@ -111,7 +116,7 @@ export class InventoryStore extends Events {
     /**
      * Parse a single item's content string
      */
-    private parseItemContent(content: string, category: string, statusChar: string): InventoryItem | null {
+    private parseItemContent(content: string, category: string): InventoryItem | null {
         const parts = content.split('|').map(p => p.trim());
         if (parts.length === 0) return null;
         
@@ -172,17 +177,6 @@ export class InventoryStore extends Events {
                 if (part.toLowerCase() === 'restock') {
                     plannedRestock = true;
                 }
-            }
-        }
-        
-        // Handle status character for boolean items
-        if (statusChar === 'x' && unitType !== 'boolean') {
-            // If marked with x but has numeric amount, treat as normal
-        } else if (statusChar === '-') {
-            if (unitType === 'boolean') {
-                amount = false;
-            } else {
-                amount = 0;
             }
         }
         
@@ -251,24 +245,7 @@ export class InventoryStore extends Events {
      * Convert a single item to a markdown line
      */
     private itemToMarkdownLine(item: InventoryItem): string {
-        const status = this.getStockStatus(item);
-        let statusChar: string;
-        
-        switch (status) {
-            case 'out':
-                statusChar = '-';
-                break;
-            case 'warning':
-                statusChar = '!';
-                break;
-            case 'in-stock':
-                statusChar = 'x';
-                break;
-            default:
-                statusChar = ' ';
-        }
-        
-        let line = `- [${statusChar}] ${item.name}`;
+        let line = `- ${item.name}`;
         
         if (item.unitType === 'boolean') {
             line += ` | ${item.amount ? 'in stock' : 'out of stock'}`;
