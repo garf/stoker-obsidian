@@ -100,7 +100,7 @@ export class CreateListModal extends Modal {
             this.showError(this.nameInput, this.nameError, 'List name is required');
             isValid = false;
         } else if (name.length > 100) {
-            this.showError(this.nameInput, this.nameError, 'Name is too long (max 100 characters)');
+            this.showError(this.nameInput, this.nameError, 'Name is too long (maximum 100 characters)');
             isValid = false;
         }
         

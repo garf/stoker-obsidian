@@ -159,10 +159,10 @@ export class StokerSidebarView extends ItemView {
             this.listNameEl.title = activeList.filePath;
         } else if (lists.length === 0) {
             this.listNameEl.setText('No lists');
-            this.listNameEl.title = 'Click to create a list';
+            this.listNameEl.title = 'Select to create a list';
         } else {
             this.listNameEl.setText('Select list');
-            this.listNameEl.title = 'Click to select a list';
+            this.listNameEl.title = 'Select to choose a list';
         }
     }
 

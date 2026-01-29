@@ -18,10 +18,8 @@ export class StokerSettingTab extends PluginSettingTab {
         const { containerEl } = this;
         containerEl.empty();
         
-        containerEl.createEl('h2', { text: 'Stoker settings' });
-        
         // Inventory lists section
-        containerEl.createEl('h3', { text: 'Inventory lists' });
+        new Setting(containerEl).setName('Inventory lists').setHeading();
         
         // Show current lists summary
         const lists = this.plugin.listManager.getLists();
@@ -47,7 +45,7 @@ export class StokerSettingTab extends PluginSettingTab {
                 }));
         
         // About section
-        containerEl.createEl('h3', { text: 'About' });
+        new Setting(containerEl).setName('About').setHeading();
         
         const aboutDiv = containerEl.createDiv({ cls: 'stoker-about' });
         aboutDiv.createEl('p', { 

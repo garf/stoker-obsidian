@@ -3,9 +3,9 @@
 	"name": "Stoker",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Manage items in your stock",
+	"description": "Manage items in your stock.",
 	"author": "Dinar Garipov",
 	"authorUrl": "https://github.com/garf",
-	"fundingUrl": "https://github.com/garf",
+	"fundingUrl": "https://buymeacoffee.com/garfild",
 	"isDesktopOnly": false
 }

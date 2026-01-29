@@ -32,7 +32,7 @@ export class ListManagerView extends ItemView {
     }
 
     getDisplayText(): string {
-        return 'Inventory Lists';
+        return 'Inventory lists';
     }
 
     getIcon(): string {
@@ -46,7 +46,7 @@ export class ListManagerView extends ItemView {
         
         // Header
         const header = container.createDiv({ cls: 'stoker-list-manager-header' });
-        header.createEl('h2', { text: 'Inventory Lists' });
+        header.createEl('h2', { text: 'Inventory lists' });
         
         // Create new list button
         const createBtn = header.createEl('button', { cls: 'stoker-btn mod-cta' });

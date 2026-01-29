@@ -33,29 +33,29 @@ Track any inventory in your Obsidian vault. Monitor stock levels, set minimum th
 
 ### Getting Started
 
-1. Click the package icon in the ribbon or run the command **Stoker: Open inventory**
+1. Select the package icon in the ribbon or run the command **Stoker: Open inventory**
 2. Create your first inventory list when prompted
 3. Add items using the **Add item** button
 
 ### Managing Items
 
-- Click an item row to edit it
+- Select an item row to edit it
 - Use **+/-** buttons to quickly adjust amounts
-- Click the shopping cart icon to mark items for restock
+- Select the shopping cart icon to mark items for restock
 - Set minimum thresholds to get low-stock warnings
 
 ### Categories
 
 Categories are created automatically when you add items. To manage categories:
 1. Open the inventory view
-2. Click the settings icon next to the category filter
+2. Select the settings icon next to the category filter
 3. Rename or delete categories as needed
 
 ### Multiple Lists
 
 Create separate lists for different locations or purposes:
-1. Open **Settings → Stoker settings**
-2. Click **Open list manager**
+1. Open **Settings → Stoker**
+2. Select **Open list manager**
 3. Create new lists or switch between existing ones
 
 ## Commands

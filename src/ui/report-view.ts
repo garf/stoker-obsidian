@@ -31,7 +31,7 @@ export class ReportView extends ItemView {
         if (activeList) {
             return `Report: ${activeList.name}`;
         }
-        return 'Inventory Report';
+        return 'Inventory report';
     }
 
     getIcon(): string {
@@ -47,7 +47,7 @@ export class ReportView extends ItemView {
         const header = container.createDiv({ cls: 'stoker-report-header' });
         
         const titleRow = header.createDiv({ cls: 'stoker-report-title-row' });
-        titleRow.createEl('h2', { text: 'Inventory Report' });
+        titleRow.createEl('h2', { text: 'Inventory report' });
         
         // Export buttons container
         const exportBtns = titleRow.createDiv({ cls: 'stoker-export-btns' });
@@ -172,7 +172,7 @@ export class ReportView extends ItemView {
         
         // Header with count
         this.reportContentEl.createEl('h3', { 
-            text: `Shopping List (${shoppingItems.length} items)`,
+            text: `Shopping list (${shoppingItems.length} items)`,
             cls: 'stoker-report-section-title'
         });
         
@@ -210,7 +210,7 @@ export class ReportView extends ItemView {
         
         // Header
         this.reportContentEl.createEl('h3', { 
-            text: 'Low Stock Report',
+            text: 'Low stock report',
             cls: 'stoker-report-section-title'
         });
         
@@ -238,7 +238,7 @@ export class ReportView extends ItemView {
         // Out of stock section
         if (outItems.length > 0) {
             this.reportContentEl.createEl('h4', { 
-                text: 'Out of Stock',
+                text: 'Out of stock',
                 cls: 'stoker-report-subsection-title stoker-report-subsection--danger'
             });
             this.renderItemList(outItems);
@@ -247,7 +247,7 @@ export class ReportView extends ItemView {
         // Almost running out section
         if (warningItems.length > 0) {
             this.reportContentEl.createEl('h4', { 
-                text: 'Almost Running Out',
+                text: 'Almost running out',
                 cls: 'stoker-report-subsection-title stoker-report-subsection--warning'
             });
             this.renderItemList(warningItems);
@@ -276,7 +276,7 @@ export class ReportView extends ItemView {
         
         // Header
         this.reportContentEl.createEl('h3', { 
-            text: 'Full Inventory',
+            text: 'Full inventory',
             cls: 'stoker-report-section-title'
         });
         
@@ -314,7 +314,7 @@ export class ReportView extends ItemView {
         // In stock section
         if (inStockItems.length > 0) {
             this.reportContentEl.createEl('h4', { 
-                text: 'In Stock',
+                text: 'In stock',
                 cls: 'stoker-report-subsection-title stoker-report-subsection--success'
             });
             this.renderItemsByCategory(inStockItems, false);
@@ -323,7 +323,7 @@ export class ReportView extends ItemView {
         // Almost running out section
         if (warningItems.length > 0) {
             this.reportContentEl.createEl('h4', { 
-                text: 'Almost Running Out',
+                text: 'Almost running out',
                 cls: 'stoker-report-subsection-title stoker-report-subsection--warning'
             });
             this.renderItemsByCategory(warningItems, false);
@@ -332,7 +332,7 @@ export class ReportView extends ItemView {
         // Out of stock section
         if (outItems.length > 0) {
             this.reportContentEl.createEl('h4', { 
-                text: 'Out of Stock',
+                text: 'Out of stock',
                 cls: 'stoker-report-subsection-title stoker-report-subsection--danger'
             });
             this.renderItemsByCategory(outItems, false);
@@ -527,10 +527,10 @@ export class ReportView extends ItemView {
         const items = store.getItems().filter(item => item.plannedRestock);
         
         if (items.length === 0) {
-            return `# Shopping List - ${listName}\n\n*Generated: ${date}*\n\nNo items to buy.`;
+            return `# Shopping list - ${listName}\n\n*Generated: ${date}*\n\nNo items to buy.`;
         }
         
-        let md = `# Shopping List - ${listName}\n\n*Generated: ${date}*\n\n`;
+        let md = `# Shopping list - ${listName}\n\n*Generated: ${date}*\n\n`;
         
         // Group by category
         const grouped = this.groupByCategory(items);
@@ -597,13 +597,13 @@ export class ReportView extends ItemView {
         const warningItems = items.filter(item => store.getStockStatus(item) === 'warning');
         
         if (outItems.length === 0 && warningItems.length === 0) {
-            return `# Low Stock Report - ${listName}\n\n*Generated: ${date}*\n\n✅ All items are well stocked!`;
+            return `# Low stock report - ${listName}\n\n*Generated: ${date}*\n\n✅ All items are well stocked!`;
         }
         
-        let md = `# Low Stock Report - ${listName}\n\n*Generated: ${date}*\n\n`;
+        let md = `# Low stock report - ${listName}\n\n*Generated: ${date}*\n\n`;
         
         if (outItems.length > 0) {
-            md += `## ❌ Out of Stock (${outItems.length})\n\n`;
+            md += `## ❌ Out of stock (${outItems.length})\n\n`;
             for (const item of outItems.sort((a, b) => a.name.localeCompare(b.name))) {
                 md += `- **${item.name}**`;
                 if (item.category) md += ` [${item.category}]`;
@@ -613,7 +613,7 @@ export class ReportView extends ItemView {
         }
         
         if (warningItems.length > 0) {
-            md += `## ⚠️ Running Low (${warningItems.length})\n\n`;
+            md += `## ⚠️ Running low (${warningItems.length})\n\n`;
             for (const item of warningItems.sort((a, b) => a.name.localeCompare(b.name))) {
                 md += `- ${item.name}: ${formatAmount(item)}`;
                 if (item.category) md += ` [${item.category}]`;
@@ -669,10 +669,10 @@ export class ReportView extends ItemView {
         const items = store.getItems();
         
         if (items.length === 0) {
-            return `# Full Inventory - ${listName}\n\n*Generated: ${date}*\n\nNo items in inventory.`;
+            return `# Full inventory - ${listName}\n\n*Generated: ${date}*\n\nNo items in inventory.`;
         }
         
-        let md = `# Full Inventory - ${listName}\n\n*Generated: ${date}*\n\n`;
+        let md = `# Full inventory - ${listName}\n\n*Generated: ${date}*\n\n`;
         md += `**Total items:** ${items.length}\n\n`;
         
         // Group by category

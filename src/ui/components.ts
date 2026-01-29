@@ -228,9 +228,9 @@ export function formatAmount(item: InventoryItem): string {
     // Add minimum threshold if set
     if (item.minimum !== undefined) {
         if (item.unit) {
-            text += ` (min: ${formatNumber(item.minimum)} ${item.unit})`;
+            text += ` (minimum: ${formatNumber(item.minimum)} ${item.unit})`;
         } else {
-            text += ` (min: ${formatNumber(item.minimum)})`;
+            text += ` (minimum: ${formatNumber(item.minimum)})`;
         }
     }
     
